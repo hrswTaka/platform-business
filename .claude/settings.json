@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /Users/hrswtaka/Documents/dev/new-business/10_platform-business diff --staged)",
+      "Bash(git -C /Users/hrswtaka/Documents/dev/new-business/10_platform-business add body-photo-app/)",
+      "Bash(git -C /Users/hrswtaka/Documents/dev/new-business/10_platform-business commit -m ' *)",
+      "Bash(git -C /Users/hrswtaka/Documents/dev/new-business/10_platform-business push)"
+    ]
+  }
+}
