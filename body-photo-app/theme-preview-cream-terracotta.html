@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PHYSIQUE — Cream × Terracotta Theme Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #FDFAF6;
+      --surf-1:   #F5F0E8;
+      --surf-2:   #EDE6DA;
+      --surf-3:   #E4DACB;
+      --border:   rgba(120,90,60,0.10);
+      --border-hi:rgba(120,90,60,0.20);
+      --accent:   #C06040;
+      --accent-dim: rgba(192,96,64,0.10);
+      --accent-dim2:rgba(192,96,64,0.05);
+      --t1: #2A1F18;
+      --t2: #7A6A60;
+      --t3: #B8A898;
+      --green: #5A8A60;
+      --nav-h: 70px;
+      --r-card: 16px;
+    }
+
+    body {
+      background: #E8E0D5;
+      font-family: 'Barlow', sans-serif;
+      color: var(--t1);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 24px 64px;
+      gap: 40px;
+    }
+
+    /* ── Page title ── */
+    .page-header {
+      text-align: center;
+    }
+    .page-header h1 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #8A7060;
+      margin-bottom: 6px;
+    }
+    .page-header p {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: #A89080;
+    }
+
+    /* ── Swatch palette ── */
+    .palette-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      max-width: 520px;
+    }
+    .palette-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #8A7060;
+    }
+    .swatches {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .swatch {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .swatch-block {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      border: 1px solid rgba(0,0,0,0.07);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .swatch-name {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 8px;
+      color: #8A7060;
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    /* ── Phone shell ── */
+    .phone-outer {
+      position: relative;
+    }
+    .phone-frame {
+      width: 320px;
+      height: 640px;
+      border-radius: 44px;
+      background: #C8BEB0;
+      box-shadow:
+        0 0 0 1.5px rgba(0,0,0,0.12),
+        0 0 0 10px #C8BEB0,
+        0 0 0 11px rgba(0,0,0,0.10),
+        0 40px 80px rgba(80,50,30,0.22),
+        0 10px 20px rgba(80,50,30,0.12);
+      padding: 10px;
+      display: flex;
+    }
+    .phone-screen {
+      flex: 1;
+      background: var(--bg);
+      border-radius: 36px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Screen content ── */
+    .screen-scroll {
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* Header */
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 18px 14px;
+    }
+    .wordmark {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 5px;
+      color: var(--t1);
+    }
+    .wordmark em {
+      color: var(--accent);
+      font-style: normal;
+    }
+    .date-chip {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      color: var(--t3);
+      background: var(--surf-2);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 4px 8px;
+    }
+
+    /* Calendar */
+    .cal-wrap { padding: 0 18px; }
+    .cal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .cal-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: var(--t1);
+    }
+    .cal-nav {
+      width: 26px; height: 26px;
+      background: var(--surf-2);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px;
+      color: var(--t2);
+      cursor: pointer;
+    }
+    .cal-dow {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      margin-bottom: 3px;
+    }
+    .cal-dow span {
+      text-align: center;
+      font-size: 8px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--t3);
+      padding: 3px 0;
+    }
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+    }
+    .cal-cell {
+      aspect-ratio: 1;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1px;
+    }
+    .cal-cell.has-rec {
+      background: var(--surf-1);
+      border: 1px solid var(--border);
+    }
+    .cal-cell.today-cell .day-num { color: var(--accent); font-weight: 800; }
+    .cal-cell.has-rec.today-cell {
+      background: var(--accent-dim);
+      border-color: rgba(192,96,64,0.25);
+    }
+    .day-num {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 8px;
+      color: var(--t3);
+      line-height: 1;
+    }
+    .cal-cell.has-rec .day-num { color: var(--t2); }
+    .cal-wt {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--t1);
+      line-height: 1;
+    }
+
+    /* Bottom Nav */
+    .bottom-nav {
+      height: 60px;
+      background: rgba(253,250,246,0.95);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      color: var(--t3);
+    }
+    .nav-btn.active { color: var(--accent); }
+    .nav-btn svg { width: 18px; height: 18px; }
+    .nav-lbl {
+      font-size: 7px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .nav-add-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .nav-add {
+      width: 42px; height: 42px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 16px rgba(192,96,64,0.35);
+    }
+
+    /* ── Callout labels on the side ── */
+    .annotations {
+      position: absolute;
+      right: -140px;
+      top: 0;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      padding: 40px 0;
+      gap: 0;
+    }
+    .ann-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .ann-line {
+      width: 32px;
+      height: 1px;
+      background: rgba(120,90,60,0.3);
+    }
+    .ann-text {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      color: #8A7060;
+      white-space: nowrap;
+    }
+    .ann-accent { color: var(--accent); font-weight: 600; }
+
+    /* ── Bottom caption ── */
+    .caption {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      color: #8A7060;
+      text-align: center;
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1>PHYSIQUE — Theme Preview</h1>
+    <p>Cream × Terracotta</p>
+  </div>
+
+  <!-- Palette swatches -->
+  <div class="palette-wrap">
+    <div class="palette-label">Color Palette</div>
+    <div class="swatches">
+      <div class="swatch">
+        <div class="swatch-block" style="background:#FDFAF6"></div>
+        <div class="swatch-name">BG<br>#FDFAF6</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-block" style="background:#F5F0E8"></div>
+        <div class="swatch-name">Surf 1<br>#F5F0E8</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-block" style="background:#EDE6DA"></div>
+        <div class="swatch-name">Surf 2<br>#EDE6DA</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-block" style="background:#C06040"></div>
+        <div class="swatch-name">Accent<br>#C06040</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-block" style="background:#2A1F18"></div>
+        <div class="swatch-name">Text 1<br>#2A1F18</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-block" style="background:#7A6A60"></div>
+        <div class="swatch-name">Text 2<br>#7A6A60</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-block" style="background:#B8A898"></div>
+        <div class="swatch-name">Text 3<br>#B8A898</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Phone mockup -->
+  <div class="phone-outer">
+    <div class="phone-frame">
+      <div class="phone-screen">
+
+        <div class="screen-scroll">
+          <!-- Header -->
+          <div class="app-header">
+            <div class="wordmark">PHY<em>SIQ</em>UE</div>
+            <div class="date-chip">2026.06.06</div>
+          </div>
+
+          <!-- Calendar -->
+          <div class="cal-wrap">
+            <div class="cal-header">
+              <div class="cal-nav">‹</div>
+              <div class="cal-title">2026年6月</div>
+              <div class="cal-nav">›</div>
+            </div>
+            <div class="cal-dow">
+              <span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span>
+            </div>
+            <div class="cal-grid">
+              <!-- Week 1: starts Monday (offset 1) -->
+              <div class="cal-cell"></div>
+              <div class="cal-cell"><span class="day-num">1</span></div>
+              <div class="cal-cell"><span class="day-num">2</span></div>
+              <div class="cal-cell has-rec"><span class="day-num">3</span><span class="cal-wt">72.4</span></div>
+              <div class="cal-cell"><span class="day-num">4</span></div>
+              <div class="cal-cell"><span class="day-num">5</span></div>
+              <div class="cal-cell has-rec today-cell"><span class="day-num">6</span><span class="cal-wt">71.8</span></div>
+              <!-- Week 2 -->
+              <div class="cal-cell"><span class="day-num">7</span></div>
+              <div class="cal-cell has-rec"><span class="day-num">8</span><span class="cal-wt">71.5</span></div>
+              <div class="cal-cell"><span class="day-num">9</span></div>
+              <div class="cal-cell"><span class="day-num">10</span></div>
+              <div class="cal-cell has-rec"><span class="day-num">11</span><span class="cal-wt">71.2</span></div>
+              <div class="cal-cell"><span class="day-num">12</span></div>
+              <div class="cal-cell"><span class="day-num">13</span></div>
+              <!-- Week 3 -->
+              <div class="cal-cell"><span class="day-num">14</span></div>
+              <div class="cal-cell"><span class="day-num">15</span></div>
+              <div class="cal-cell has-rec"><span class="day-num">16</span><span class="cal-wt">70.9</span></div>
+              <div class="cal-cell"><span class="day-num">17</span></div>
+              <div class="cal-cell"><span class="day-num">18</span></div>
+              <div class="cal-cell"><span class="day-num">19</span></div>
+              <div class="cal-cell"><span class="day-num">20</span></div>
+              <!-- Week 4 -->
+              <div class="cal-cell"><span class="day-num">21</span></div>
+              <div class="cal-cell"><span class="day-num">22</span></div>
+              <div class="cal-cell"><span class="day-num">23</span></div>
+              <div class="cal-cell"><span class="day-num">24</span></div>
+              <div class="cal-cell"><span class="day-num">25</span></div>
+              <div class="cal-cell"><span class="day-num">26</span></div>
+              <div class="cal-cell"><span class="day-num">27</span></div>
+              <!-- Week 5 -->
+              <div class="cal-cell"><span class="day-num">28</span></div>
+              <div class="cal-cell"><span class="day-num">29</span></div>
+              <div class="cal-cell"><span class="day-num">30</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Nav -->
+        <div class="bottom-nav">
+          <div class="nav-btn active">
+            <svg viewBox="0 0 22 22" fill="none">
+              <path d="M3 10L11 3l8 7v8a1 1 0 01-1 1H4a1 1 0 01-1-1v-8Z" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M8 21v-8h6v8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <span class="nav-lbl">ホーム</span>
+          </div>
+          <div class="nav-btn">
+            <svg viewBox="0 0 22 22" fill="none">
+              <rect x="2" y="3" width="8" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/>
+              <rect x="12" y="3" width="8" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/>
+            </svg>
+            <span class="nav-lbl">比較</span>
+          </div>
+          <div class="nav-add-wrap">
+            <div class="nav-add">
+              <svg width="18" height="18" viewBox="0 0 22 22" fill="none">
+                <path d="M11 4v14M4 11h14" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+              </svg>
+            </div>
+          </div>
+          <div class="nav-btn">
+            <svg viewBox="0 0 22 22" fill="none">
+              <circle cx="11" cy="11" r="3" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M11 2v2M11 18v2M2 11h2M18 11h2M4.93 4.93l1.41 1.41M15.66 15.66l1.41 1.41M4.93 17.07l1.41-1.41M15.66 6.34l1.41-1.41" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+            </svg>
+            <span class="nav-lbl">設定</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="caption">Cream × Terracotta — PHYSIQUE theme preview</div>
+
+</body>
+</html>
