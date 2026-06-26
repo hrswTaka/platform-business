@@ -1,23 +1,25 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
-import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { AppHeader } from "../components/AppHeader";
 import { C, F } from "../constants/theme";
+import type { BodyRecord } from "../App";
 
-const PHOTOS: Record<string, {weight:number; color:string}> = {
-  "2026-01-15": { weight:78.4, color:"#C5D8EC" },
-  "2026-02-03": { weight:76.8, color:"#D4C5E0" },
-  "2026-03-12": { weight:74.5, color:"#B8D8BE" },
-  "2026-04-20": { weight:72.9, color:"#DDD8B0" },
-  "2026-05-10": { weight:72.1, color:"#DFC5C8" },
-};
+const DOW = ["日","月","火","水","木","金","土"];
 
-const { width: W } = Dimensions.get("window");
+function pad(n: number) { return String(n).padStart(2,"0"); }
 
-export function CompareScreen() {
+interface Props {
+  records: Record<string, BodyRecord>;
+}
+
+export function CompareScreen({ records }: Props) {
   const [selected, setSelected] = useState<string[]>([]);
   const [layout, setLayout] = useState<"v"|"h">("v");
   const [sortMode, setSortMode] = useState<"date"|"weight">("date");
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [year, setYear] = useState(2026);
+  const [month, setMonth] = useState(5);
 
   function toggle(ds: string) {
     setSelected(prev =>
@@ -25,9 +27,30 @@ export function CompareScreen() {
     );
   }
 
-  const sorted = [...selected].sort((a,b) => {
+  function prevMonth() {
+    if (month === 1) { setYear(y => y - 1); setMonth(12); }
+    else setMonth(m => m - 1);
+  }
+
+  function nextMonth() {
+    if (month === 12) { setYear(y => y + 1); setMonth(1); }
+    else setMonth(m => m + 1);
+  }
+
+  const firstDay = new Date(year, month - 1, 1).getDay();
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const cells: (number|null)[] = [
+    ...Array(firstDay).fill(null),
+    ...Array.from({length: daysInMonth}, (_, i) => i + 1),
+  ];
+  const ds = (d: number) => `${year}-${pad(month)}-${pad(d)}`;
+
+  const photoRecords = Object.fromEntries(
+    Object.entries(records).filter(([, record]) => !!record.photoUri)
+  );
+  const sorted = selected.filter(ds => photoRecords[ds]).sort((a,b) => {
     if (sortMode === "weight")
-      return (PHOTOS[b]?.weight||0) - (PHOTOS[a]?.weight||0);
+      return (photoRecords[b]?.weight||0) - (photoRecords[a]?.weight||0);
     return a.localeCompare(b);
   });
 
@@ -36,7 +59,7 @@ export function CompareScreen() {
       <AppHeader />
       <ScrollView>
         {/* Date picker trigger */}
-        <TouchableOpacity style={s.pickBtn}>
+        <TouchableOpacity style={s.pickBtn} onPress={() => setPickerOpen(true)} activeOpacity={0.75}>
           <Ionicons name="calendar-outline" size={18} color={C.t3} />
           <Text style={s.pickTxt}>カレンダーで日付を選択</Text>
           <View style={[s.badge, selected.length > 0 && s.badgeActive]}>
@@ -45,22 +68,6 @@ export function CompareScreen() {
             </Text>
           </View>
         </TouchableOpacity>
-
-        {/* Quick select from sample data */}
-        <View style={s.quickRow}>
-          <Text style={s.quickLabel}>サンプルから選択</Text>
-          {Object.entries(PHOTOS).map(([ds]) => (
-            <TouchableOpacity
-              key={ds}
-              style={[s.quickBtn, selected.includes(ds) && s.quickBtnActive]}
-              onPress={() => toggle(ds)}
-            >
-              <Text style={[s.quickBtnTxt, selected.includes(ds) && s.quickBtnTxtActive]}>
-                {ds.slice(5)}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
 
         {/* Sort & layout toggles */}
         {selected.length > 0 && (
@@ -98,14 +105,17 @@ export function CompareScreen() {
         <View style={[s.result, layout==="h" && s.resultH]}>
           {sorted.length === 0 ? (
             <View style={s.empty}>
-              <Text style={s.emptyTxt}>日付を選択してください</Text>
+              <Text style={s.emptyTxt}>
+                {Object.keys(photoRecords).length > 0 ? "日付を選択してください" : "写真付きの記録がありません"}
+              </Text>
             </View>
           ) : layout === "h" ? (
             sorted.map((ds, i) => {
-              const rec = PHOTOS[ds];
+              const rec = photoRecords[ds];
               const label = sorted.length===1?"RECORD":i===0?"BEFORE":i===sorted.length-1?"AFTER":`STEP ${i+1}`;
               return (
-                <View key={ds} style={[s.photoH, {backgroundColor: rec.color}]}>
+                <View key={ds} style={s.photoH}>
+                  <Image source={{ uri: rec.photoUri || "" }} style={s.photoImg} resizeMode="contain" />
                   <View style={s.badge2}>
                     <Text style={s.b2Tag}>{label}</Text>
                     <Text style={s.b2Wt}>{rec.weight}kg</Text>
@@ -116,11 +126,12 @@ export function CompareScreen() {
             })
           ) : (
             sorted.map((ds, i) => {
-              const rec = PHOTOS[ds];
+              const rec = photoRecords[ds];
               const label = sorted.length===1?"RECORD":i===0?"BEFORE":i===sorted.length-1?"AFTER":`STEP ${i+1}`;
               return (
                 <View key={ds}>
-                  <View style={[s.photoV, {backgroundColor: rec.color}]}>
+                  <View style={s.photoV}>
+                    <Image source={{ uri: rec.photoUri || "" }} style={s.photoImg} resizeMode="contain" />
                     <View style={s.badge2}>
                       <Text style={s.b2Tag}>{label}</Text>
                       <Text style={s.b2Wt}>{rec.weight}kg</Text>
@@ -134,6 +145,85 @@ export function CompareScreen() {
           )}
         </View>
       </ScrollView>
+
+      <Modal
+        visible={pickerOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setPickerOpen(false)}
+      >
+        <View style={s.modalRoot}>
+          <Pressable style={s.scrim} onPress={() => setPickerOpen(false)} />
+          <View style={s.sheet}>
+            <View style={s.sheetHandle} />
+            <View style={s.sheetHead}>
+              <Text style={s.sheetTitle}>比較する日付</Text>
+              <TouchableOpacity style={s.sheetClose} onPress={() => setPickerOpen(false)}>
+                <Ionicons name="close" size={18} color={C.t2} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={s.calNav}>
+              <TouchableOpacity style={s.calNavBtn} onPress={prevMonth}>
+                <Ionicons name="chevron-back" size={18} color={C.t2} />
+              </TouchableOpacity>
+              <Text style={s.calTitle}>{year}年{month}月</Text>
+              <TouchableOpacity style={s.calNavBtn} onPress={nextMonth}>
+                <Ionicons name="chevron-forward" size={18} color={C.t2} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={s.dowRow}>
+              {DOW.map((d, i) => (
+                <Text
+                  key={d}
+                  style={[
+                    s.dowCell,
+                    i === 0 && {color:"rgba(229,57,53,0.65)"},
+                    i === 6 && {color:"rgba(25,118,210,0.65)"},
+                  ]}
+                >
+                  {d}
+                </Text>
+              ))}
+            </View>
+
+            <View style={s.calGrid}>
+              {cells.map((d, i) => {
+                if (d === null) return <View key={`empty-${i}`} style={[s.calCell, s.calEmpty]} />;
+                const key = ds(d);
+                const rec = photoRecords[key];
+                const isSelected = selected.includes(key);
+                return (
+                  <TouchableOpacity
+                    key={key}
+                    style={[
+                      s.calCell,
+                      rec && s.calHasPhoto,
+                      isSelected && s.calSelected,
+                    ]}
+                    disabled={!rec}
+                    activeOpacity={rec ? 0.72 : 1}
+                    onPress={() => toggle(key)}
+                  >
+                    <Text style={[s.calDay, isSelected && s.calDaySelected]}>{d}</Text>
+                    {rec && (
+                      <>
+                        <View style={[s.photoDot, isSelected && s.photoDotSelected]} />
+                        <Text style={[s.calWeight, isSelected && s.calWeightSelected]}>{rec.weight}</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            <TouchableOpacity style={s.doneBtn} onPress={() => setPickerOpen(false)} activeOpacity={0.85}>
+              <Text style={s.doneTxt}>{selected.length > 0 ? `${selected.length}枚で比較` : "閉じる"}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -152,18 +242,8 @@ const s = StyleSheet.create({
   badgeTxt: { fontFamily:F.mono, fontSize:10, fontWeight:"600", color:C.t3 },
   badgeTxtActive:{ color:"#fff" },
 
-  quickRow: { flexDirection:"row", flexWrap:"wrap", gap:6,
-               paddingHorizontal:20, paddingVertical:12, alignItems:"center" },
-  quickLabel:{ fontSize:9, fontWeight:"700", textTransform:"uppercase", letterSpacing:1.5,
-                color:C.t3, marginRight:4 },
-  quickBtn: { paddingHorizontal:10, paddingVertical:5, borderRadius:8,
-               borderWidth:1, borderColor:C.border, backgroundColor:C.surf2 },
-  quickBtnActive:{ backgroundColor:C.accent, borderColor:C.accent },
-  quickBtnTxt:{ fontFamily:F.mono, fontSize:11, color:C.t2 },
-  quickBtnTxtActive:{ color:"#fff" },
-
   sortRow:  { flexDirection:"row", alignItems:"center", gap:6,
-               paddingHorizontal:20, marginBottom:12 },
+               paddingHorizontal:20, marginTop:12, marginBottom:12 },
   sortLabel:{ fontSize:9, fontWeight:"700", textTransform:"uppercase",
                letterSpacing:1.5, color:C.t3, marginRight:2 },
   pill:     { paddingHorizontal:13, paddingVertical:5, borderRadius:8,
@@ -181,8 +261,12 @@ const s = StyleSheet.create({
   resultH:  { flexDirection:"row" },
   empty:    { paddingVertical:48, paddingHorizontal:20, alignItems:"center" },
   emptyTxt: { fontSize:13, color:C.t3 },
-  photoV:   { width:"100%", aspectRatio:16/9, justifyContent:"flex-end", padding:12 },
-  photoH:   { flex:1, aspectRatio:3/4, justifyContent:"flex-end", padding:8 },
+  photoV:   { width:"100%", aspectRatio:16/9, justifyContent:"flex-end", padding:12,
+               backgroundColor:C.bg },
+  photoH:   { flex:1, aspectRatio:3/4, justifyContent:"flex-end", padding:8,
+               backgroundColor:C.bg },
+  photoImg: { position:"absolute", top:0, right:0, bottom:0, left:0,
+               width:"100%", height:"100%" },
   divider:  { height:1, backgroundColor:C.border },
   badge2:   { backgroundColor:"rgba(255,255,255,0.82)", borderRadius:10,
                paddingVertical:8, paddingHorizontal:12,
@@ -191,4 +275,47 @@ const s = StyleSheet.create({
                letterSpacing:2, color:C.t3, marginBottom:2 },
   b2Wt:    { fontFamily:F.condensedExtraBold, fontSize:24, color:C.t1, lineHeight:26 },
   b2Date:  { fontFamily:F.mono, fontSize:10, color:C.t3 },
+
+  modalRoot:{ flex:1, justifyContent:"flex-end" },
+  scrim:    { position:"absolute", top:0, right:0, bottom:0, left:0,
+               backgroundColor:"rgba(0,0,0,0.38)" },
+  sheet:    { backgroundColor:C.bg, borderTopLeftRadius:24, borderTopRightRadius:24,
+               paddingHorizontal:20, paddingTop:10, paddingBottom:22,
+               borderTopWidth:1, borderColor:C.border },
+  sheetHandle:{ alignSelf:"center", width:38, height:4, borderRadius:2,
+                 backgroundColor:C.surf3, marginBottom:14 },
+  sheetHead:{ flexDirection:"row", alignItems:"center", marginBottom:12 },
+  sheetTitle:{ flex:1, fontFamily:F.condensedExtraBold, fontSize:24,
+                letterSpacing:1, color:C.t1 },
+  sheetClose:{ width:34, height:34, borderRadius:17, backgroundColor:C.surf1,
+                alignItems:"center", justifyContent:"center", borderWidth:1, borderColor:C.border },
+
+  calNav:   { flexDirection:"row", alignItems:"center", marginBottom:10 },
+  calNavBtn:{ width:34, height:34, borderRadius:10, backgroundColor:C.surf1,
+               borderWidth:1, borderColor:C.border, alignItems:"center", justifyContent:"center" },
+  calTitle: { flex:1, textAlign:"center", fontFamily:F.condensedExtraBold,
+               fontSize:20, letterSpacing:1, color:C.t1 },
+  dowRow:   { flexDirection:"row", backgroundColor:C.surf1,
+               borderTopLeftRadius:10, borderTopRightRadius:10, overflow:"hidden" },
+  dowCell:  { width:"14.2857%", textAlign:"center", paddingVertical:7,
+               fontSize:11, fontWeight:"700", color:C.t3 },
+  calGrid:  { flexDirection:"row", flexWrap:"wrap", borderLeftWidth:1,
+               borderTopWidth:1, borderColor:C.border },
+  calCell:  { width:"14.2857%", height:48, borderRightWidth:1, borderBottomWidth:1,
+               borderColor:C.border, alignItems:"center", justifyContent:"center",
+               backgroundColor:C.bg },
+  calEmpty: { backgroundColor:C.surf1 },
+  calHasPhoto:{ backgroundColor:C.surf1 },
+  calSelected:{ backgroundColor:C.accentDim },
+  calDay:   { fontSize:13, fontWeight:"600", color:C.t2 },
+  calDaySelected:{ color:C.accent },
+  photoDot: { width:5, height:5, borderRadius:3, backgroundColor:C.accent,
+               opacity:0.35, marginTop:3 },
+  photoDotSelected:{ opacity:1 },
+  calWeight:{ fontFamily:F.condensedExtraBold, fontSize:11, color:C.t2,
+               lineHeight:13, marginTop:1 },
+  calWeightSelected:{ color:C.accent },
+  doneBtn:  { marginTop:16, backgroundColor:C.accent, borderRadius:100,
+               paddingVertical:15, alignItems:"center" },
+  doneTxt:  { fontFamily:F.condensedBlack, fontSize:18, color:"#fff", letterSpacing:1.5 },
 });

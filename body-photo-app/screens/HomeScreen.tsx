@@ -1,30 +1,35 @@
-import { useState } from "react";
-import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Image, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { AppHeader } from "../components/AppHeader";
 import { C, F } from "../constants/theme";
+import type { BodyRecord } from "../App";
 
 const DOW = ["日","月","火","水","木","金","土"];
-const { width: W } = Dimensions.get("window");
-const CELL_W = Math.floor(W / 7);
-
-const WEIGHTS: Record<string, number> = {
-  "2026-05-01":72.8,"2026-05-02":72.6,"2026-05-03":72.9,
-  "2026-05-04":72.7,"2026-05-05":72.4,"2026-05-06":72.6,
-  "2026-05-07":72.3,"2026-05-08":72.5,"2026-05-09":72.2,
-  "2026-05-10":72.1,"2026-05-11":71.9,"2026-05-12":72.2,
-  "2026-05-13":72.4,"2026-05-14":72.1,"2026-05-15":71.8,
-  "2026-05-16":72.0,"2026-05-17":71.7,"2026-05-18":71.9,
-  "2026-05-19":71.6,"2026-05-20":71.8,"2026-05-21":71.5,
-  "2026-05-22":71.7,"2026-05-23":72.1,
-};
 
 function pad(n: number) { return String(n).padStart(2,"0"); }
 
-export function HomeScreen() {
+interface Props {
+  records: Record<string, BodyRecord>;
+  focusDate?: string | null;
+}
+
+export function HomeScreen({ records, focusDate }: Props) {
+  const { width } = useWindowDimensions();
+  const photoWidth = Math.min(220, Math.max(160, width * 0.48));
   const TODAY = { y:2026, m:5, d:23 };
   const [year, setYear] = useState(TODAY.y);
   const [month, setMonth] = useState(TODAY.m);
   const [selected, setSelected] = useState<string|null>(null);
+
+  useEffect(() => {
+    if (!focusDate) return;
+    const [nextYear, nextMonth] = focusDate.split("-").map(Number);
+    if (!nextYear || !nextMonth) return;
+    setYear(nextYear);
+    setMonth(nextMonth);
+    setSelected(focusDate);
+  }, [focusDate]);
 
   const firstDay = new Date(year, month-1, 1).getDay();
   const daysInMonth = new Date(year, month, 0).getDate();
@@ -47,7 +52,7 @@ export function HomeScreen() {
     ...Array.from({length: daysInMonth}, (_, i) => i+1),
   ];
 
-  const selWeight = selected ? WEIGHTS[selected] : null;
+  const selRecord = selected ? records[selected] : null;
   const selParts  = selected?.split("-");
   const selDow    = selected ? DOW[new Date(selected).getDay()] : null;
 
@@ -83,10 +88,10 @@ export function HomeScreen() {
       <View style={s.grid}>
         {cells.map((d, i) => {
           if (d === null) return (
-            <View key={`e${i}`} style={[s.cell, s.cellEmpty, {width: CELL_W}]} />
+            <View key={`e${i}`} style={[s.cell, s.cellEmpty]} />
           );
           const key = ds(d);
-          const w = WEIGHTS[key];
+          const record = records[key];
           const dow = i % 7;
           const today_ = isToday(d);
           const isSel  = key === selected;
@@ -94,14 +99,14 @@ export function HomeScreen() {
             <TouchableOpacity
               key={key}
               style={[
-                s.cell, {width: CELL_W},
+                s.cell,
                 today_ && s.cellToday,
                 isSel  && s.cellSel,
                 dow===0 && !today_ && !isSel && s.cellSun,
                 dow===6 && !today_ && !isSel && s.cellSat,
               ]}
-              onPress={() => w && setSelected(isSel ? null : key)}
-              activeOpacity={w ? 0.7 : 1}
+              onPress={() => record && setSelected(isSel ? null : key)}
+              activeOpacity={record ? 0.7 : 1}
             >
               {today_ ? (
                 <View style={s.todayCircle}><Text style={s.circleNum}>{d}</Text></View>
@@ -113,8 +118,8 @@ export function HomeScreen() {
                   dow===6 && {color:"rgba(25,118,210,0.75)"},
                 ]}>{d}</Text>
               )}
-              {w != null && (
-                <Text style={s.calWt}>{w}<Text style={s.calWtUnit}>kg</Text></Text>
+              {record && (
+                <Text style={s.calWt}>{record.weight}<Text style={s.calWtUnit}>kg</Text></Text>
               )}
             </TouchableOpacity>
           );
@@ -126,7 +131,7 @@ export function HomeScreen() {
         {!selected ? (
           <View style={s.detailEmpty}>
             <View style={s.emptyIcon}>
-              <Text style={{fontSize:16}}>📅</Text>
+              <Ionicons name="calendar-outline" size={18} color={C.t3} />
             </View>
             <Text style={s.emptyTxt}>日付をタップ</Text>
           </View>
@@ -138,19 +143,26 @@ export function HomeScreen() {
                   {selParts[0]}.{selParts[1]}.{selParts[2]}（{selDow}）
                 </Text>
               )}
-              {selWeight != null ? (
+              {selRecord ? (
                 <Text style={s.detailWt}>
-                  {selWeight}<Text style={s.detailWtUnit}>kg</Text>
+                  {selRecord.weight}<Text style={s.detailWtUnit}>kg</Text>
                 </Text>
               ) : (
                 <Text style={s.noWeight}>記録なし</Text>
               )}
+              {!!selRecord?.memo && <Text style={s.memoTxt}>{selRecord.memo}</Text>}
             </View>
-            <View style={s.detailRight}>
-              <View style={s.noPhoto}>
-                <Text style={{fontSize:20, opacity:0.3}}>📷</Text>
-                <Text style={s.noPhotoTxt}>写真なし</Text>
-              </View>
+            <View style={[s.detailRight, {width: photoWidth}]}>
+              {selRecord?.photoUri ? (
+                <View style={s.photoFrame}>
+                  <Image source={{ uri: selRecord.photoUri }} style={s.photo} resizeMode="contain" />
+                </View>
+              ) : (
+                <View style={s.noPhoto}>
+                  <Ionicons name="camera-outline" size={24} color={C.t3} />
+                  <Text style={s.noPhotoTxt}>写真なし</Text>
+                </View>
+              )}
             </View>
           </View>
         )}
@@ -175,12 +187,12 @@ const s = StyleSheet.create({
 
   dowRow:     { flexDirection:"row", backgroundColor:C.surf1,
                  borderBottomWidth:1, borderBottomColor:CELL_BORDER },
-  dowCell:    { width:CELL_W, textAlign:"center", paddingVertical:6,
+  dowCell:    { width:"14.2857%", textAlign:"center", paddingVertical:6,
                  fontSize:12, fontWeight:"700", color:C.t3 },
 
   grid:       { flexDirection:"row", flexWrap:"wrap",
                  borderLeftWidth:1, borderTopWidth:1, borderColor:CELL_BORDER },
-  cell:       { height:56, borderRightWidth:1, borderBottomWidth:1,
+  cell:       { width:"14.2857%", height:56, borderRightWidth:1, borderBottomWidth:1,
                  borderColor:CELL_BORDER, alignItems:"center",
                  paddingTop:4, paddingBottom:4, backgroundColor:C.bg },
   cellEmpty:  { backgroundColor:C.surf1 },
@@ -205,14 +217,18 @@ const s = StyleSheet.create({
   emptyTxt:   { fontSize:12, fontWeight:"500", color:C.t3 },
 
   detailContent:{ flex:1, flexDirection:"row" },
-  detailLeft: { flex:1, justifyContent:"center", paddingLeft:20, paddingRight:12, gap:6 },
+  detailLeft: { flex:1, justifyContent:"center", paddingLeft:18, paddingRight:8, gap:6 },
   detailDate: { fontFamily:F.mono, fontSize:11, color:C.t3 },
   detailWt:   { fontFamily:F.condensedExtraBold, fontSize:52, color:C.t1, lineHeight:56 },
   detailWtUnit:{ fontFamily:F.condensedExtraBold, fontSize:20, color:C.t3 },
   noWeight:   { fontSize:13, color:C.t3 },
-  detailRight:{ width:150, marginVertical:14, marginRight:16 },
+  memoTxt:     { fontSize:12, color:C.t2, lineHeight:18 },
+  detailRight:{ marginVertical:14, marginRight:14 },
   noPhoto:    { flex:1, backgroundColor:C.surf1, borderWidth:2, borderStyle:"dashed",
                  borderColor:C.borderHi, borderRadius:12,
                  alignItems:"center", justifyContent:"center", gap:4 },
+  photoFrame:  { flex:1, borderRadius:12, overflow:"hidden",
+                 alignItems:"center", justifyContent:"center" },
+  photo:       { width:"100%", height:"100%" },
   noPhotoTxt: { fontSize:11, color:C.t3 },
 });

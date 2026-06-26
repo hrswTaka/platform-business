@@ -35,16 +35,6 @@ export function SettingsScreen() {
       <AppHeader />
       <ScrollView contentContainerStyle={s.content}>
 
-        {/* Stats strip */}
-        <View style={s.strip}>
-          {[["23","記録数"],["135","継続日"],["6.3","減量kg"]].map(([val,lbl], i) => (
-            <View key={lbl} style={[s.stripItem, i<2 && {borderRightWidth:1, borderRightColor:C.border}]}>
-              <Text style={s.stripVal}>{val}</Text>
-              <Text style={s.stripLbl}>{lbl}</Text>
-            </View>
-          ))}
-        </View>
-
         <Text style={s.sectionLbl}>データ管理</Text>
         <View style={s.list}>
           <Row iconName="download-outline" iconBg="rgba(200,255,51,0.13)"
@@ -78,12 +68,6 @@ export function SettingsScreen() {
 const s = StyleSheet.create({
   root:       { flex:1, backgroundColor:C.bg },
   content:    { padding:20, paddingBottom:40 },
-
-  strip:      { flexDirection:"row", backgroundColor:C.surf1, borderWidth:1,
-                 borderColor:C.border, borderRadius:16, marginBottom:28, overflow:"hidden" },
-  stripItem:  { flex:1, paddingVertical:16, paddingHorizontal:8, alignItems:"center" },
-  stripVal:   { fontFamily:F.condensedExtraBold, fontSize:28, color:C.t1, lineHeight:30 },
-  stripLbl:   { fontSize:9, color:C.t3, textTransform:"uppercase", letterSpacing:1.2, marginTop:4 },
 
   sectionLbl: { fontSize:10, fontWeight:"700", textTransform:"uppercase", letterSpacing:2,
                  color:C.t3, marginBottom:10 },

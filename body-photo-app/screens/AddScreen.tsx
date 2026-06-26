@@ -4,10 +4,11 @@ import { useState } from "react";
 import { Image, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { AppHeader } from "../components/AppHeader";
 import { C, F } from "../constants/theme";
+import type { BodyRecord } from "../App";
 
 const DOW_JP = ["日","月","火","水","木","金","土"];
 
-interface Props { onSave: () => void; }
+interface Props { onSave: (record: BodyRecord) => void; }
 
 export function AddScreen({ onSave }: Props) {
   const today = new Date(2026,4,23);
@@ -23,6 +24,8 @@ export function AddScreen({ onSave }: Props) {
   const m = String(date.getMonth()+1).padStart(2,"0");
   const d = String(date.getDate()).padStart(2,"0");
   const dow = DOW_JP[date.getDay()];
+  const dateKey = `${y}-${m}-${d}`;
+  const canSave = Number.isFinite(parseFloat(weight));
 
   async function pickPhoto() {
     if (Platform.OS !== "web") {
@@ -31,8 +34,7 @@ export function AddScreen({ onSave }: Props) {
     }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [3, 4],
+      allowsEditing: false,
       quality: 0.85,
     });
     if (!result.canceled && result.assets.length > 0) {
@@ -40,9 +42,15 @@ export function AddScreen({ onSave }: Props) {
     }
   }
 
-  function adj(delta: number) {
-    const v = parseFloat(weight)||0;
-    setWeight(Math.max(30, Math.min(250, v+delta)).toFixed(1));
+  function save() {
+    const parsedWeight = parseFloat(weight);
+    if (!Number.isFinite(parsedWeight)) return;
+    onSave({
+      date: dateKey,
+      weight: Number(parsedWeight.toFixed(1)),
+      memo: memo.trim(),
+      photoUri,
+    });
   }
 
   return (
@@ -84,13 +92,6 @@ export function AddScreen({ onSave }: Props) {
                 />
                 <Text style={s.wtUnit}>kg</Text>
               </View>
-              <View style={s.adjRow}>
-                {(["+1","+0.5","+0.1","-0.1","-0.5","-1"] as const).map(v => (
-                  <TouchableOpacity key={v} style={s.adjBtn} onPress={() => adj(parseFloat(v))}>
-                    <Text style={s.adjTxt}>{v}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
             </View>
           </View>
 
@@ -100,7 +101,9 @@ export function AddScreen({ onSave }: Props) {
             <View style={s.rowBody}>
               {photoUri ? (
                 <View style={s.photoPreviewWrap}>
-                  <Image source={{ uri: photoUri }} style={s.photoPreview} />
+                  <View style={s.photoPreviewFrame}>
+                    <Image source={{ uri: photoUri }} style={s.photoPreview} resizeMode="contain" />
+                  </View>
                   <TouchableOpacity style={s.photoChangeBtn} onPress={pickPhoto}>
                     <Ionicons name="refresh-outline" size={14} color={C.t2} />
                     <Text style={s.photoBtnTxt}>変更</Text>
@@ -131,7 +134,12 @@ export function AddScreen({ onSave }: Props) {
 
         </View>
 
-        <TouchableOpacity style={s.saveBtn} onPress={onSave} activeOpacity={0.85}>
+        <TouchableOpacity
+          style={[s.saveBtn, !canSave && s.saveBtnDisabled]}
+          onPress={save}
+          activeOpacity={0.85}
+          disabled={!canSave}
+        >
           <Text style={s.saveTxt}>記録を保存</Text>
         </TouchableOpacity>
 
@@ -168,17 +176,14 @@ const s = StyleSheet.create({
                  borderRadius:10, paddingVertical:6, paddingHorizontal:10,
                  width:130, textAlign:"center" },
   wtUnit:     { fontFamily:F.condensedExtraBold, fontSize:18, color:C.t3 },
-  adjRow:     { flexDirection:"row", gap:4, marginTop:8 },
-  adjBtn:     { flex:1, backgroundColor:C.surf2, borderWidth:1, borderColor:C.border,
-                 borderRadius:6, paddingVertical:5, alignItems:"center" },
-  adjTxt:     { fontFamily:F.mono, fontSize:10, fontWeight:"600", color:C.t2 },
-
   photoBtn:       { flexDirection:"row", alignItems:"center", gap:8,
                      backgroundColor:C.surf1, borderWidth:1, borderColor:C.border,
                      borderRadius:10, paddingVertical:9, paddingHorizontal:12 },
   photoBtnTxt:    { fontSize:12, fontWeight:"600", color:C.t2 },
   photoPreviewWrap:{ flexDirection:"row", alignItems:"center", gap:12 },
-  photoPreview:   { width:64, height:80, borderRadius:8, backgroundColor:C.surf2 },
+  photoPreviewFrame:{ width:86, height:72, borderRadius:8, backgroundColor:C.surf2,
+                       overflow:"hidden", alignItems:"center", justifyContent:"center" },
+  photoPreview:   { width:"100%", height:"100%" },
   photoChangeBtn: { flexDirection:"row", alignItems:"center", gap:6,
                      backgroundColor:C.surf1, borderWidth:1, borderColor:C.border,
                      borderRadius:8, paddingVertical:7, paddingHorizontal:10 },
@@ -188,5 +193,6 @@ const s = StyleSheet.create({
   saveBtn:    { marginHorizontal:20, marginTop:24, marginBottom:40,
                  backgroundColor:C.accent, borderRadius:100, paddingVertical:18,
                  alignItems:"center" },
+  saveBtnDisabled:{ opacity:0.45 },
   saveTxt:    { fontFamily:F.condensedBlack, fontSize:20, color:"#fff", letterSpacing:2 },
 });
