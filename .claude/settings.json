@@ -4,7 +4,14 @@
       "Bash(git -C /Users/hrswtaka/Documents/dev/new-business/10_platform-business diff --staged)",
       "Bash(git -C /Users/hrswtaka/Documents/dev/new-business/10_platform-business add body-photo-app/)",
       "Bash(git -C /Users/hrswtaka/Documents/dev/new-business/10_platform-business commit -m ' *)",
-      "Bash(git -C /Users/hrswtaka/Documents/dev/new-business/10_platform-business push)"
+      "Bash(git -C /Users/hrswtaka/Documents/dev/new-business/10_platform-business push)",
+      "Bash(git -C /Users/hrswtaka/Documents/dev/new-business/10_platform-business status)",
+      "Bash(git -C /Users/hrswtaka/Documents/dev/new-business/10_platform-business log --oneline -5)",
+      "Bash(git -C /Users/hrswtaka/Documents/dev/new-business/10_platform-business diff body-photo-app/design-mockup.html)",
+      "Bash(git -C /Users/hrswtaka/Documents/dev/new-business/10_platform-business add body-photo-app/design-mockup.html body-photo-app/TODO.md body-photo-app/theme-preview-cream-terracotta.html body-photo-app/theme-preview-pink-patterns.html body-photo-app/theme.md)",
+      "Bash(npx create-expo-app@latest _physique_tmp --template blank-typescript)",
+      "Bash(mkdir -p /Users/hrswtaka/Documents/dev/new-business/10_platform-business/body-photo-app/screens /Users/hrswtaka/Documents/dev/new-business/10_platform-business/body-photo-app/components)",
+      "Bash(npx expo *)"
     ]
   }
 }

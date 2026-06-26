@@ -6,9 +6,10 @@
 数字の停滞期でも見た目の変化を確認できることで継続モチベを維持できる。
 
 **方針:**
-- **プラットフォーム: Next.js PWA** → PC Webブラウザ + スマホホーム画面追加を1コードでカバー
-- **ストレージ: 端末ローカルのみ（IndexedDB）** → 写真はサーバーに一切送らない。裸写真の漏洩リスクゼロ
-- **将来: Expoアプリ化** → ユーザーが増えてストレージ・カメラ体験の限界が出てから検討
+- **プラットフォーム: Expo（React Native）** → iOS / Android ネイティブアプリ。App Store / Google Play 配布
+- **ストレージ: 端末ローカルのみ（expo-sqlite + expo-file-system）** → 写真はサーバーに一切送らない。裸写真の漏洩リスクゼロ
+- **課金: RevenueCat** → サブスクリプション・単発購入を統一管理
+- **アナリティクス: PostHog** → 継続率・機能利用状況のトラッキング
 
 ---
 
@@ -59,13 +60,16 @@ PHYSIQUE アプリ
 
 | 要素 | 採用 | 理由 |
 |---|---|---|
-| フレームワーク | Next.js 14 + TypeScript | PWA化しやすい、Vercelデプロイ簡単 |
-| スタイル | Tailwind CSS | 高速開発 |
-| DB | Dexie.js（IndexedDB wrapper） | 写真をブラウザ内に保存 |
-| PWA | next-pwa | オフライン対応、ホーム画面追加 |
+| フレームワーク | Expo（React Native）+ TypeScript | iOS/Android ネイティブ、カメラ体験◎ |
+| スタイル | NativeWind | Tailwind CSS の書き方をそのままRNに |
+| DB | expo-sqlite | ネイティブSQLite、写真URIを保存 |
+| 写真 | expo-image-picker + expo-file-system | カメラ撮影・ライブラリ選択・ローカル保存 |
+| 課金 | RevenueCat（react-native-purchases） | App Store / Google Play サブスク統一管理 |
+| アナリティクス | PostHog（posthog-react-native） | 継続率・機能利用状況トラッキング |
 | CSV | Papa Parse | CSVインポート/エクスポート |
-| 写真アップロード | react-dropzone | ドラッグ&ドロップ + ファイル選択 |
-| 画像合成 | html2canvas | Instagram出力用（クライアント側レンダリング） |
+| 画像合成 | react-native-view-shot | 比較画像のシェア用レンダリング |
+| ルーティング | Expo Router | file-based routing（Next.js に近い書き方）|
+| ビルド | EAS Build | App Store / Google Play 配布 |
 
 ---
 
@@ -78,7 +82,7 @@ Record {
   date: string        // "2026-05-23"
   weight: number      // 体重 (kg)
   waist?: number      // ウエスト (cm) - want
-  photoBlob?: Blob    // 写真（端末内にのみ保存）
+  photoUri?: string   // expo-file-system のローカルURI（端末内にのみ保存）
   note?: string       // メモ
   createdAt: number   // timestamp
 }
@@ -134,17 +138,26 @@ Record {
 ## TODO一覧
 
 ### Phase 0: 意思決定・準備（完了済み）
-- [x] プラットフォーム選定 → **Next.js PWA（PC + スマホ共通）**
-- [x] ストレージ選定 → **ローカルのみ（IndexedDB）**
+- [x] プラットフォーム選定 → **Expo（React Native）**
+- [x] ストレージ選定 → **ローカルのみ（expo-sqlite + expo-file-system）**
+- [x] 課金 → **RevenueCat**
+- [x] アナリティクス → **PostHog**
 - [x] プロジェクトフォルダ → `10_platform-business/body-photo-app/`（作成済み）
 
 ### Phase 1: プロジェクトセットアップ
-- [x] Next.js + TypeScript + Tailwind CSS プロジェクト作成（`body-photo-app/` に作成済み）
-- [ ] 依存パッケージインストール: `dexie papaparse react-dropzone html2canvas`
-- [ ] `@types/papaparse` インストール
-- [ ] Dexie.js DB初期化コード作成（`lib/db.ts`）
-- [ ] PWA設定: `manifest.json` + `next-pwa` or `next/metadata` の `manifest`
-- [ ] レスポンシブレイアウト: モバイルファースト（スマホ縦持ち基準）
+- [ ] Expo プロジェクト初期化: `npx create-expo-app@latest body-photo-app --template`
+- [ ] 依存パッケージインストール:
+  - `expo-sqlite expo-file-system expo-image-picker`
+  - `nativewind tailwindcss`
+  - `react-native-purchases`（RevenueCat）
+  - `posthog-react-native`
+  - `react-native-view-shot`
+  - `papaparse @types/papaparse`
+  - `expo-router`
+- [ ] expo-sqlite DB初期化コード作成（`lib/db.ts`）
+- [ ] RevenueCat 初期化（App Store Connect / Google Play Console 設定）
+- [ ] PostHog 初期化（プロジェクトキー設定）
+- [ ] EAS Build 設定（`eas.json`）
 
 ### Phase 2: コア機能（MVP必須）
 - [ ] **記録画面**: 日付・体重・写真をセットで保存
@@ -188,14 +201,17 @@ Record {
 - [ ] フェーズタグ（減量/増量/維持）
 
 ### Phase 6: リリース準備
-- [ ] プライバシーポリシーページ作成（ローカル保存のみ旨を明記）
-- [ ] OGP設定（SNSシェア用）
-- [ ] ドメイン取得 or サブドメイン設定
-- [ ] 本番デプロイ（Vercel推奨）
+- [ ] プライバシーポリシー作成（ローカル保存のみ旨を明記）
+- [ ] App Store Connect / Google Play Console 設定
+- [ ] EAS Build で本番ビルド生成
+- [ ] TestFlight / 内部テスト配布
+- [ ] App Store / Google Play 審査提出
 
 ### Phase 7: 収益化・コミュニティ立ち上げ
+- [ ] RevenueCat で有料プラン定義（月額 or 年額）
+- [ ] アプリ内購入フロー実装（ペイウォール画面）
+- [ ] PostHog でコンバージョン計測
 - [ ] コミュニティプラットフォーム選定（Discord / LINE / 独自）
-- [ ] 有料コミュニティ開設・決済導線構築（Stripe or BASE）
 - [ ] アプリ内コミュニティ誘導バナー実装（30日継続トリガー）
 - [ ] 「◯日継続中」バッジ表示機能実装
 - [ ] 比較写真SNSシェア機能（集客兼用）
@@ -214,14 +230,14 @@ Record {
 
 ## 最初に作るもの（優先順位）
 
-1. Phase 1 セットアップ → 2日
-2. Phase 2 コア機能（記録保存 + 一覧） → 3日
+1. Phase 1 セットアップ（Expo初期化 + RevenueCat / PostHog 初期化）→ 2日
+2. Phase 2 コア機能（記録保存 + 一覧）→ 3日
 3. Phase 3 比較機能 → 2日
 4. Phase 4 CSV管理 → 1日
-5. Phase 6 デプロイ → 1日
-6. Phase 7 コミュニティ・収益化 → リリース後1ヶ月以内
+5. Phase 6 ストア審査・リリース → 1〜2週間
+6. Phase 7 収益化・コミュニティ → リリース後1ヶ月以内
 
-**合計: 約9日でMVPリリース → その後コミュニティ立ち上げ**
+**合計: 約10日でMVP完成 → ストア審査を経てリリース**
 
 ---
 

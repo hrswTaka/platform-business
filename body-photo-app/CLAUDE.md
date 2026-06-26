@@ -2,7 +2,7 @@
 
 ## プロジェクト概要
 
-筋トレ・ダイエットを継続している人が体重と写真をセットで記録し、ビフォーアフターを視覚的に比較できるPWAアプリ。
+筋トレ・ダイエットを継続している人が体重と写真をセットで記録し、ビフォーアフターを視覚的に比較できるモバイルアプリ。
 
 - **アプリ名**: PHYSIQUE
 - **TODO・設計**: [TODO.md](./TODO.md)
@@ -10,44 +10,53 @@
 
 ## 技術スタック
 
-- **フレームワーク**: Next.js + TypeScript + Tailwind CSS
-- **DB**: Dexie.js（IndexedDB — 写真はサーバーに送らない）
-- **CSV**: Papa Parse
-- **写真アップロード**: react-dropzone
-- **Instagram画像出力**: html2canvas（Canvas APIによるクライアント側レンダリング）
+| 要素 | 採用 |
+|---|---|
+| フレームワーク | Expo（React Native）+ TypeScript |
+| スタイル | NativeWind（Tailwind CSS for RN）|
+| DB | expo-sqlite |
+| 課金 | RevenueCat（`react-native-purchases`）|
+| アナリティクス | PostHog（`posthog-react-native`）|
+| 写真 | expo-image-picker + expo-file-system |
+| 画像合成 | react-native-view-shot |
+| CSV | Papa Parse |
+| ルーティング | Expo Router（file-based）|
 
 ## 重要方針
 
-- **写真はローカルのみ**: IndexedDBに保存。サーバーには一切送らない
-- **PWA**: PC Webブラウザ + スマホホーム画面追加を1コードでカバー
-- **モバイルファースト**: max-width 390px基準、スマホ縦持ちレイアウト優先
+- **写真はローカルのみ**: expo-sqlite + expo-file-system に保存。サーバーには一切送らない
+- **ネイティブアプリ**: iOS / Android 両対応。App Store / Google Play 配布
+- **モバイルファースト**: スマホ縦持ちレイアウト優先
 
 ## ディレクトリ構成（予定）
 
 ```
 app/
-  page.tsx          ← ホーム（記録一覧）
+  (tabs)/
+    index.tsx         ← ホーム（記録一覧）
+    gallery.tsx       ← ギャラリー
+    settings.tsx      ← 設定・CSV・削除
   record/
-    page.tsx        ← 新規記録追加
+    index.tsx         ← 新規記録追加
   compare/
-    page.tsx        ← ビフォーアフター比較
-  settings/
-    page.tsx        ← 設定・CSV・削除
+    index.tsx         ← ビフォーアフター比較
 lib/
-  db.ts             ← Dexie.js DB定義
-  export.ts         ← CSV/JSONエクスポートユーティリティ
+  db.ts               ← expo-sqlite DB定義・CRUD
+  export.ts           ← CSV/JSONエクスポートユーティリティ
 components/
   RecordCard.tsx
   CompareView.tsx
-  InstagramExport.tsx
+  ShareExport.tsx
 ```
 
 ## コマンド
 
 ```bash
-npm run dev    # 開発サーバー起動（http://localhost:3000）
-npm run build  # 本番ビルド
-npm run start  # 本番サーバー起動
+npx expo start          # 開発サーバー起動
+npx expo run:ios        # iOS シミュレーター
+npx expo run:android    # Android エミュレーター
+eas build               # 本番ビルド（EAS Build）
+eas submit              # ストア提出
 ```
 
 ## データモデル
@@ -58,7 +67,7 @@ interface BodyRecord {
   date: string     // "2026-05-23"
   weight: number   // 体重 kg（小数点1桁）
   waist?: number   // ウエスト cm（オプション）
-  photoBlob?: Blob // 写真（IndexedDB内のみ）
+  photoUri?: string // expo-file-system 上のローカルURI
   note?: string    // メモ
   createdAt: number
 }
