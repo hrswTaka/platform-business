@@ -7,7 +7,12 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "bundleIdentifier": "com.hrswtaka.physique",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "体の変化を記録するため、写真ライブラリから写真を選択します。写真は端末内にのみ保存されます。"
+      }
     },
     "android": {
       "adaptiveIcon": {
