@@ -98,16 +98,16 @@ export function CompareScreen({ records }: Props) {
               </Text>
             </View>
           ) : layout === "h" ? (
-            sorted.map((ds, i) => {
+            sorted.map(ds => {
               const rec = photoRecords[ds];
-              const label = sorted.length===1?"RECORD":i===0?"BEFORE":i===sorted.length-1?"AFTER":`STEP ${i+1}`;
               return (
-                <View key={ds} style={s.photoH}>
-                  <Image source={{ uri: rec.photoUri || "" }} style={s.photoImg} resizeMode="contain" />
-                  <View style={s.badge2}>
-                    <Text style={s.b2Tag}>{label}</Text>
-                    <Text style={s.b2Wt}>{rec.weight}kg</Text>
-                    <Text style={s.b2Date}>{ds.replace(/-/g,".")}</Text>
+                <View key={ds} style={s.itemH}>
+                  <View style={s.photoH}>
+                    <Image source={{ uri: rec.photoUri || "" }} style={s.photoImg} resizeMode="contain" />
+                  </View>
+                  <View style={s.caption}>
+                    <Text style={s.capWt}>{rec.weight}<Text style={s.capUnit}>kg</Text></Text>
+                    <Text style={s.capDate}>{ds.replace(/-/g,".")}</Text>
                   </View>
                 </View>
               );
@@ -115,16 +115,14 @@ export function CompareScreen({ records }: Props) {
           ) : (
             sorted.map((ds, i) => {
               const rec = photoRecords[ds];
-              const label = sorted.length===1?"RECORD":i===0?"BEFORE":i===sorted.length-1?"AFTER":`STEP ${i+1}`;
               return (
                 <View key={ds}>
                   <View style={s.photoV}>
                     <Image source={{ uri: rec.photoUri || "" }} style={s.photoImg} resizeMode="contain" />
-                    <View style={s.badge2}>
-                      <Text style={s.b2Tag}>{label}</Text>
-                      <Text style={s.b2Wt}>{rec.weight}kg</Text>
-                      <Text style={s.b2Date}>{ds.replace(/-/g,".")}</Text>
-                    </View>
+                  </View>
+                  <View style={s.caption}>
+                    <Text style={s.capWt}>{rec.weight}<Text style={s.capUnit}>kg</Text></Text>
+                    <Text style={s.capDate}>{ds.replace(/-/g,".")}</Text>
                   </View>
                   {i < sorted.length-1 && <View style={s.divider} />}
                 </View>
@@ -259,20 +257,17 @@ const s = StyleSheet.create({
   resultH:  { flexDirection:"row", flexWrap:"wrap" },
   empty:    { paddingVertical:48, paddingHorizontal:20, alignItems:"center" },
   emptyTxt: { fontSize:13, color:C.t3 },
-  photoV:   { width:"100%", aspectRatio:3/4, justifyContent:"flex-end", padding:12,
-               backgroundColor:C.bg },
-  photoH:   { width:"50%", aspectRatio:3/4, justifyContent:"flex-end", padding:8,
-               backgroundColor:C.bg },
-  photoImg: { position:"absolute", top:0, right:0, bottom:0, left:0,
-               width:"100%", height:"100%" },
+  photoV:   { width:"100%", aspectRatio:3/4, backgroundColor:C.bg },
+  itemH:    { width:"50%" },
+  photoH:   { width:"100%", aspectRatio:3/4, backgroundColor:C.bg },
+  photoImg: { width:"100%", height:"100%" },
   divider:  { height:1, backgroundColor:C.border },
-  badge2:   { alignSelf:"flex-start", flexDirection:"row", alignItems:"baseline", gap:6,
-               backgroundColor:"rgba(0,0,0,0.45)", borderRadius:8,
-               paddingVertical:4, paddingHorizontal:8 },
-  b2Tag:    { fontSize:8, fontWeight:"700", textTransform:"uppercase",
-               letterSpacing:1.5, color:"rgba(255,255,255,0.7)" },
-  b2Wt:    { fontFamily:F.condensedExtraBold, fontSize:18, color:"#fff", lineHeight:20 },
-  b2Date:  { fontFamily:F.mono, fontSize:9, color:"rgba(255,255,255,0.7)" },
+  caption:  { flexDirection:"row", alignItems:"baseline", justifyContent:"center", gap:8,
+               paddingVertical:6, backgroundColor:C.surf1,
+               borderTopWidth:1, borderTopColor:C.border },
+  capWt:    { fontFamily:F.condensedExtraBold, fontSize:18, color:C.t1, lineHeight:20 },
+  capUnit:  { fontSize:11, color:C.t3 },
+  capDate:  { fontFamily:F.mono, fontSize:10, color:C.t3 },
 
   modalRoot:{ flex:1, justifyContent:"flex-end" },
   scrim:    { position:"absolute", top:0, right:0, bottom:0, left:0,
