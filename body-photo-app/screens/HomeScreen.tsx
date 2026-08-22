@@ -47,11 +47,16 @@ export function HomeScreen({ records, focusDate }: Props) {
   const ds = (d: number) => `${year}-${pad(month)}-${pad(d)}`;
   const isToday = (d: number) => year===TODAY.y && month===TODAY.m && d===TODAY.d;
 
-  // Build grid cells: nulls for empty, numbers for days
-  const cells: (number|null)[] = [
-    ...Array(firstDay).fill(null),
-    ...Array.from({length: daysInMonth}, (_, i) => i+1),
+  // 常に6行（42セル）。前月・翌月の日付は薄く表示する
+  type Cell = { day: number; inMonth: boolean };
+  const prevMonthDays = new Date(year, month-1, 0).getDate();
+  const cells: Cell[] = [
+    ...Array.from({length: firstDay}, (_, i) =>
+      ({ day: prevMonthDays - firstDay + 1 + i, inMonth: false })),
+    ...Array.from({length: daysInMonth}, (_, i) =>
+      ({ day: i+1, inMonth: true })),
   ];
+  while (cells.length < 42) cells.push({ day: cells.length - firstDay - daysInMonth + 1, inMonth: false });
 
   const selRecord = selected ? records[selected] : null;
   const selParts  = selected?.split("-");
@@ -87,10 +92,13 @@ export function HomeScreen({ records, focusDate }: Props) {
 
       {/* Calendar grid */}
       <View style={s.grid}>
-        {cells.map((d, i) => {
-          if (d === null) return (
-            <View key={`e${i}`} style={[s.cell, s.cellEmpty]} />
+        {cells.map((cell, i) => {
+          if (!cell.inMonth) return (
+            <View key={`o${i}`} style={s.cell}>
+              <Text style={s.dayNumDim}>{cell.day}</Text>
+            </View>
           );
+          const d = cell.day;
           const key = ds(d);
           const record = records[key];
           const dow = i % 7;
@@ -194,11 +202,11 @@ const s = StyleSheet.create({
   cell:       { width:"14.2857%", height:46, borderRightWidth:1, borderBottomWidth:1,
                  borderColor:CELL_BORDER, alignItems:"center",
                  paddingTop:2, paddingBottom:2, backgroundColor:C.bg },
-  cellEmpty:  { backgroundColor:C.surf1 },
   cellToday:  { backgroundColor:"rgba(229,57,53,0.05)" },
   cellSel:    { backgroundColor:C.accentDim },
 
   dayNum:     { fontSize:15, fontWeight:"600", color:C.t2, lineHeight:20 },
+  dayNumDim:  { fontSize:15, fontWeight:"600", color:C.t3, opacity:0.35, lineHeight:20 },
   todayCircle:{ width:27, height:27, borderRadius:14, backgroundColor:C.red,
                  alignItems:"center", justifyContent:"center" },
   selCircle:  { width:27, height:27, borderRadius:14, backgroundColor:C.accent,
