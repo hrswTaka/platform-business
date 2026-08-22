@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { AppHeader } from "../components/AppHeader";
 import { C, F } from "../constants/theme";
 import type { BodyRecord } from "../App";
 
@@ -17,7 +16,8 @@ interface Props {
 export function HomeScreen({ records, focusDate }: Props) {
   const { width } = useWindowDimensions();
   const photoWidth = Math.min(220, Math.max(160, width * 0.48));
-  const TODAY = { y:2026, m:5, d:23 };
+  const now = new Date();
+  const TODAY = { y: now.getFullYear(), m: now.getMonth() + 1, d: now.getDate() };
   const [year, setYear] = useState(TODAY.y);
   const [month, setMonth] = useState(TODAY.m);
   const [selected, setSelected] = useState<string|null>(null);
@@ -46,11 +46,16 @@ export function HomeScreen({ records, focusDate }: Props) {
   const ds = (d: number) => `${year}-${pad(month)}-${pad(d)}`;
   const isToday = (d: number) => year===TODAY.y && month===TODAY.m && d===TODAY.d;
 
-  // Build grid cells: nulls for empty, numbers for days
-  const cells: (number|null)[] = [
-    ...Array(firstDay).fill(null),
-    ...Array.from({length: daysInMonth}, (_, i) => i+1),
+  // 常に6行（42セル）。前月・翌月の日付は薄く表示する
+  type Cell = { day: number; inMonth: boolean };
+  const prevMonthDays = new Date(year, month-1, 0).getDate();
+  const cells: Cell[] = [
+    ...Array.from({length: firstDay}, (_, i) =>
+      ({ day: prevMonthDays - firstDay + 1 + i, inMonth: false })),
+    ...Array.from({length: daysInMonth}, (_, i) =>
+      ({ day: i+1, inMonth: true })),
   ];
+  while (cells.length < 42) cells.push({ day: cells.length - firstDay - daysInMonth + 1, inMonth: false });
 
   const selRecord = selected ? records[selected] : null;
   const selParts  = selected?.split("-");
@@ -58,7 +63,6 @@ export function HomeScreen({ records, focusDate }: Props) {
 
   return (
     <View style={s.root}>
-      <AppHeader />
 
       {/* Month navigation */}
       <View style={s.monthNav}>
@@ -86,10 +90,13 @@ export function HomeScreen({ records, focusDate }: Props) {
 
       {/* Calendar grid */}
       <View style={s.grid}>
-        {cells.map((d, i) => {
-          if (d === null) return (
-            <View key={`e${i}`} style={[s.cell, s.cellEmpty]} />
+        {cells.map((cell, i) => {
+          if (!cell.inMonth) return (
+            <View key={`o${i}`} style={s.cell}>
+              <Text style={s.dayNumDim}>{cell.day}</Text>
+            </View>
           );
+          const d = cell.day;
           const key = ds(d);
           const record = records[key];
           const dow = i % 7;
@@ -102,15 +109,11 @@ export function HomeScreen({ records, focusDate }: Props) {
                 s.cell,
                 today_ && s.cellToday,
                 isSel  && s.cellSel,
-                dow===0 && !today_ && !isSel && s.cellSun,
-                dow===6 && !today_ && !isSel && s.cellSat,
               ]}
               onPress={() => record && setSelected(isSel ? null : key)}
               activeOpacity={record ? 0.7 : 1}
             >
-              {today_ ? (
-                <View style={s.todayCircle}><Text style={s.circleNum}>{d}</Text></View>
-              ) : isSel ? (
+              {isSel ? (
                 <View style={s.selCircle}><Text style={s.circleNum}>{d}</Text></View>
               ) : (
                 <Text style={[s.dayNum,
@@ -192,19 +195,15 @@ const s = StyleSheet.create({
 
   grid:       { flexDirection:"row", flexWrap:"wrap",
                  borderLeftWidth:1, borderTopWidth:1, borderColor:CELL_BORDER },
-  cell:       { width:"14.2857%", height:56, borderRightWidth:1, borderBottomWidth:1,
+  cell:       { width:"14.2857%", height:46, borderRightWidth:1, borderBottomWidth:1,
                  borderColor:CELL_BORDER, alignItems:"center",
-                 paddingTop:4, paddingBottom:4, backgroundColor:C.bg },
-  cellEmpty:  { backgroundColor:C.surf1 },
+                 paddingTop:2, paddingBottom:2, backgroundColor:C.bg },
   cellToday:  { backgroundColor:"rgba(229,57,53,0.05)" },
   cellSel:    { backgroundColor:C.accentDim },
-  cellSun:    { backgroundColor:"rgba(229,57,53,0.03)" },
-  cellSat:    { backgroundColor:"rgba(25,118,210,0.03)" },
 
   dayNum:     { fontSize:15, fontWeight:"600", color:C.t2, lineHeight:20 },
-  todayCircle:{ width:27, height:27, borderRadius:14, backgroundColor:C.red,
-                 alignItems:"center", justifyContent:"center" },
-  selCircle:  { width:27, height:27, borderRadius:14, backgroundColor:C.accent,
+  dayNumDim:  { fontSize:15, fontWeight:"600", color:C.t3, opacity:0.35, lineHeight:20 },
+  selCircle:{ width:27, height:27, borderRadius:14, backgroundColor:C.accent,
                  alignItems:"center", justifyContent:"center" },
   circleNum:  { fontSize:15, fontWeight:"700", color:"#fff" },
   calWt:      { fontFamily:F.condensedExtraBold, fontSize:13, color:C.t1, marginTop:"auto" },

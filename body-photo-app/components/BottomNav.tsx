@@ -42,12 +42,12 @@ export function BottomNav({ activeTab, onTabPress }: Props) {
 }
 
 const s = StyleSheet.create({
-  nav:    { flexDirection:"row", height:70, backgroundColor:"rgba(255,255,255,0.96)",
+  nav:    { flexDirection:"row", height:56, backgroundColor:"rgba(255,255,255,0.96)",
              borderTopWidth:1, borderTopColor:C.border },
-  btn:    { flex:1, alignItems:"center", justifyContent:"center", gap:5 },
+  btn:    { flex:1, alignItems:"center", justifyContent:"center", gap:3 },
   label:  { fontFamily:F.condensedBlack, fontSize:9, letterSpacing:1.2,
              color:C.t3, textTransform:"uppercase" },
   active: { color:C.accent },
-  addBtn: { width:50, height:50, borderRadius:25, backgroundColor:C.accent,
+  addBtn: { width:42, height:42, borderRadius:21, backgroundColor:C.accent,
              alignItems:"center", justifyContent:"center" },
 });

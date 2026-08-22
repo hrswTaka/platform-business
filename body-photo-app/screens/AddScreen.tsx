@@ -1,24 +1,63 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-import { useState } from "react";
-import { Image, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-import { AppHeader } from "../components/AppHeader";
+import { useEffect, useState } from "react";
+import { Image, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { C, F } from "../constants/theme";
 import type { BodyRecord } from "../App";
+import type { RecordMap } from "../lib/db";
 
 const DOW_JP = ["日","月","火","水","木","金","土"];
 
-interface Props { onSave: (record: BodyRecord) => void; }
+interface Props {
+  onSave: (record: BodyRecord) => void;
+  records: RecordMap;
+}
 
-export function AddScreen({ onSave }: Props) {
-  const today = new Date(2026,4,23);
+export function AddScreen({ onSave, records }: Props) {
+  const today = new Date();
   const [date, setDate] = useState(today);
-  const [weight, setWeight] = useState("72.1");
+  const [weight, setWeight] = useState("");
   const [memo, setMemo] = useState("");
   const [photoUri, setPhotoUri] = useState<string | null>(null);
 
   function prevDay() { const d=new Date(date); d.setDate(d.getDate()-1); setDate(d); }
   function nextDay() { const d=new Date(date); d.setDate(d.getDate()+1); setDate(d); }
+
+  // カレンダーモーダル
+  const [calOpen, setCalOpen] = useState(false);
+  const [calYear, setCalYear] = useState(date.getFullYear());
+  const [calMonth, setCalMonth] = useState(date.getMonth() + 1);
+
+  function openCal() {
+    setCalYear(date.getFullYear());
+    setCalMonth(date.getMonth() + 1);
+    setCalOpen(true);
+  }
+  function calPrevMonth() {
+    if (calMonth === 1) { setCalYear(y => y - 1); setCalMonth(12); }
+    else setCalMonth(m => m - 1);
+  }
+  function calNextMonth() {
+    if (calMonth === 12) { setCalYear(y => y + 1); setCalMonth(1); }
+    else setCalMonth(m => m + 1);
+  }
+  function pickDay(day: number) {
+    setDate(new Date(calYear, calMonth - 1, day));
+    setCalOpen(false);
+  }
+
+  const calFirstDay = new Date(calYear, calMonth - 1, 1).getDay();
+  const calDays = new Date(calYear, calMonth, 0).getDate();
+  // 常に6行（42セル）。前月・翌月の日付は薄く表示する
+  type CalCell = { day: number; inMonth: boolean };
+  const calPrevDays = new Date(calYear, calMonth - 1, 0).getDate();
+  const calCells: CalCell[] = [
+    ...Array.from({length: calFirstDay}, (_, i) =>
+      ({ day: calPrevDays - calFirstDay + 1 + i, inMonth: false })),
+    ...Array.from({length: calDays}, (_, i) =>
+      ({ day: i + 1, inMonth: true })),
+  ];
+  while (calCells.length < 42) calCells.push({ day: calCells.length - calFirstDay - calDays + 1, inMonth: false });
 
   const y = date.getFullYear();
   const m = String(date.getMonth()+1).padStart(2,"0");
@@ -26,6 +65,16 @@ export function AddScreen({ onSave }: Props) {
   const dow = DOW_JP[date.getDay()];
   const dateKey = `${y}-${m}-${d}`;
   const canSave = Number.isFinite(parseFloat(weight));
+
+  // 選択日より前で直近の記録
+  const prevDates = Object.keys(records).filter(dk => dk < dateKey).sort();
+  const prevRecord = prevDates.length > 0 ? records[prevDates[prevDates.length - 1]] : null;
+
+  // DBロード後、未入力なら直近の体重を初期値にする
+  useEffect(() => {
+    if (weight === "" && prevRecord) setWeight(String(prevRecord.weight));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [records]);
 
   async function pickPhoto() {
     if (Platform.OS !== "web") {
@@ -55,7 +104,6 @@ export function AddScreen({ onSave }: Props) {
 
   return (
     <View style={s.root}>
-      <AppHeader />
       <ScrollView keyboardShouldPersistTaps="handled">
 
         {/* Date navigator */}
@@ -63,17 +111,23 @@ export function AddScreen({ onSave }: Props) {
           <TouchableOpacity style={s.dateNavBtn} onPress={prevDay}>
             <Ionicons name="chevron-back" size={18} color={C.t2} />
           </TouchableOpacity>
-          <View style={s.datePill}>
-            <Text style={s.datePillTxt}>{y} · {m} · {d} {dow}</Text>
-          </View>
+          <TouchableOpacity style={s.datePill} onPress={openCal} activeOpacity={0.75}>
+            <Ionicons name="calendar-outline" size={14} color={C.t3} />
+            <Text style={s.datePillTxt}>{y}.{m}.{d}（{dow}）</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={s.dateNavBtn} onPress={nextDay}>
             <Ionicons name="chevron-forward" size={18} color={C.t2} />
           </TouchableOpacity>
         </View>
 
-        <Text style={s.prevHint}>
-          前回は <Text style={s.prevHintBold}>71.7kg</Text> でした
-        </Text>
+        {prevRecord ? (
+          <Text style={s.prevHint}>
+            前回（{prevRecord.date.replace(/-/g,".")}）は{" "}
+            <Text style={s.prevHintBold}>{prevRecord.weight}kg</Text> でした
+          </Text>
+        ) : (
+          <View style={s.prevHintSpacer} />
+        )}
 
         {/* Form rows */}
         <View style={s.formRows}>
@@ -88,6 +142,8 @@ export function AddScreen({ onSave }: Props) {
                   value={weight}
                   onChangeText={setWeight}
                   keyboardType="decimal-pad"
+                  placeholder="0.0"
+                  placeholderTextColor={C.t3}
                   selectTextOnFocus
                 />
                 <Text style={s.wtUnit}>kg</Text>
@@ -144,6 +200,70 @@ export function AddScreen({ onSave }: Props) {
         </TouchableOpacity>
 
       </ScrollView>
+
+      {/* 日付選択カレンダー */}
+      <Modal
+        visible={calOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setCalOpen(false)}
+      >
+        <View style={s.modalRoot}>
+          <Pressable style={s.scrim} onPress={() => setCalOpen(false)} />
+          <View style={s.sheet}>
+            <View style={s.sheetHandle} />
+            <View style={s.calNav}>
+              <TouchableOpacity style={s.calNavBtn} onPress={calPrevMonth}>
+                <Ionicons name="chevron-back" size={18} color={C.t2} />
+              </TouchableOpacity>
+              <Text style={s.calTitle}>{calYear}年{calMonth}月</Text>
+              <TouchableOpacity style={s.calNavBtn} onPress={calNextMonth}>
+                <Ionicons name="chevron-forward" size={18} color={C.t2} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={s.dowRow}>
+              {DOW_JP.map((dowLabel, i) => (
+                <Text
+                  key={dowLabel}
+                  style={[
+                    s.dowCell,
+                    i === 0 && {color:"rgba(229,57,53,0.65)"},
+                    i === 6 && {color:"rgba(25,118,210,0.65)"},
+                  ]}
+                >
+                  {dowLabel}
+                </Text>
+              ))}
+            </View>
+
+            <View style={s.calGrid}>
+              {calCells.map((cell, i) => {
+                if (!cell.inMonth) return (
+                  <View key={`o${i}`} style={s.calCell}>
+                    <Text style={s.calDayDim}>{cell.day}</Text>
+                  </View>
+                );
+                const day = cell.day;
+                const isPicked =
+                  calYear === date.getFullYear() &&
+                  calMonth === date.getMonth() + 1 &&
+                  day === date.getDate();
+                return (
+                  <TouchableOpacity
+                    key={day}
+                    style={[s.calCell, isPicked && s.calPicked]}
+                    activeOpacity={0.72}
+                    onPress={() => pickDay(day)}
+                  >
+                    <Text style={[s.calDay, isPicked && s.calDayPicked]}>{day}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -155,13 +275,15 @@ const s = StyleSheet.create({
                  paddingHorizontal:16, paddingTop:16, gap:8 },
   dateNavBtn: { width:34, height:34, alignItems:"center", justifyContent:"center",
                  borderRadius:10, backgroundColor:C.surf1, borderWidth:1, borderColor:C.border },
-  datePill:   { flex:1, alignItems:"center", borderWidth:1, borderColor:C.border,
+  datePill:   { flex:1, flexDirection:"row", alignItems:"center", justifyContent:"center",
+                 gap:6, borderWidth:1, borderColor:C.border,
                  borderRadius:100, paddingVertical:9, backgroundColor:C.surf1 },
   datePillTxt:{ fontFamily:F.mono, fontSize:13, fontWeight:"600", color:C.t1 },
 
   prevHint:   { textAlign:"center", paddingVertical:9, paddingBottom:14,
                  fontSize:13, color:C.t3 },
   prevHintBold:{ fontFamily:F.condensedExtraBold, fontSize:18, color:C.t2 },
+  prevHintSpacer:{ height:14 },
 
   formRows:   { borderTopWidth:1, borderTopColor:C.border },
   row:        { flexDirection:"row", alignItems:"center",
@@ -195,4 +317,31 @@ const s = StyleSheet.create({
                  alignItems:"center" },
   saveBtnDisabled:{ opacity:0.45 },
   saveTxt:    { fontFamily:F.condensedBlack, fontSize:20, color:"#fff", letterSpacing:2 },
+
+  modalRoot:{ flex:1, justifyContent:"flex-end" },
+  scrim:    { position:"absolute", top:0, right:0, bottom:0, left:0,
+               backgroundColor:"rgba(0,0,0,0.38)" },
+  sheet:    { backgroundColor:C.bg, borderTopLeftRadius:24, borderTopRightRadius:24,
+               paddingHorizontal:20, paddingTop:10, paddingBottom:28,
+               borderTopWidth:1, borderColor:C.border },
+  sheetHandle:{ alignSelf:"center", width:38, height:4, borderRadius:2,
+                 backgroundColor:C.surf3, marginBottom:14 },
+  calNav:   { flexDirection:"row", alignItems:"center", marginBottom:10 },
+  calNavBtn:{ width:34, height:34, borderRadius:10, backgroundColor:C.surf1,
+               borderWidth:1, borderColor:C.border, alignItems:"center", justifyContent:"center" },
+  calTitle: { flex:1, textAlign:"center", fontFamily:F.condensedExtraBold,
+               fontSize:20, letterSpacing:1, color:C.t1 },
+  dowRow:   { flexDirection:"row", backgroundColor:C.surf1,
+               borderTopLeftRadius:10, borderTopRightRadius:10, overflow:"hidden" },
+  dowCell:  { width:"14.2857%", textAlign:"center", paddingVertical:7,
+               fontSize:11, fontWeight:"700", color:C.t3 },
+  calGrid:  { flexDirection:"row", flexWrap:"wrap", borderLeftWidth:1,
+               borderTopWidth:1, borderColor:C.border },
+  calCell:  { width:"14.2857%", height:44, borderRightWidth:1, borderBottomWidth:1,
+               borderColor:C.border, alignItems:"center", justifyContent:"center",
+               backgroundColor:C.bg },
+  calPicked:{ backgroundColor:C.accent },
+  calDay:   { fontSize:13, fontWeight:"600", color:C.t2 },
+  calDayDim:{ fontSize:13, fontWeight:"600", color:C.t3, opacity:0.35 },
+  calDayPicked:{ color:"#fff", fontWeight:"700" },
 });
