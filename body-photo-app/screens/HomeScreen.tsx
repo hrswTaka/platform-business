@@ -103,8 +103,6 @@ export function HomeScreen({ records, focusDate }: Props) {
                 s.cell,
                 today_ && s.cellToday,
                 isSel  && s.cellSel,
-                dow===0 && !today_ && !isSel && s.cellSun,
-                dow===6 && !today_ && !isSel && s.cellSat,
               ]}
               onPress={() => record && setSelected(isSel ? null : key)}
               activeOpacity={record ? 0.7 : 1}
@@ -199,8 +197,6 @@ const s = StyleSheet.create({
   cellEmpty:  { backgroundColor:C.surf1 },
   cellToday:  { backgroundColor:"rgba(229,57,53,0.05)" },
   cellSel:    { backgroundColor:C.accentDim },
-  cellSun:    { backgroundColor:"rgba(229,57,53,0.03)" },
-  cellSat:    { backgroundColor:"rgba(25,118,210,0.03)" },
 
   dayNum:     { fontSize:15, fontWeight:"600", color:C.t2, lineHeight:20 },
   todayCircle:{ width:27, height:27, borderRadius:14, backgroundColor:C.red,
