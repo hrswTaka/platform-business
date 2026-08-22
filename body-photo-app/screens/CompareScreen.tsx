@@ -39,10 +39,16 @@ export function CompareScreen({ records }: Props) {
 
   const firstDay = new Date(year, month - 1, 1).getDay();
   const daysInMonth = new Date(year, month, 0).getDate();
-  const cells: (number|null)[] = [
-    ...Array(firstDay).fill(null),
-    ...Array.from({length: daysInMonth}, (_, i) => i + 1),
+  // 常に6行（42セル）。前月・翌月の日付は薄く表示する
+  type Cell = { day: number; inMonth: boolean };
+  const prevMonthDays = new Date(year, month - 1, 0).getDate();
+  const cells: Cell[] = [
+    ...Array.from({length: firstDay}, (_, i) =>
+      ({ day: prevMonthDays - firstDay + 1 + i, inMonth: false })),
+    ...Array.from({length: daysInMonth}, (_, i) =>
+      ({ day: i + 1, inMonth: true })),
   ];
+  while (cells.length < 42) cells.push({ day: cells.length - firstDay - daysInMonth + 1, inMonth: false });
   const ds = (d: number) => `${year}-${pad(month)}-${pad(d)}`;
 
   const photoRecords = Object.fromEntries(
@@ -188,8 +194,13 @@ export function CompareScreen({ records }: Props) {
             </View>
 
             <View style={s.calGrid}>
-              {cells.map((d, i) => {
-                if (d === null) return <View key={`empty-${i}`} style={[s.calCell, s.calEmpty]} />;
+              {cells.map((cell, i) => {
+                if (!cell.inMonth) return (
+                  <View key={`o${i}`} style={s.calCell}>
+                    <Text style={s.calDayDim}>{cell.day}</Text>
+                  </View>
+                );
+                const d = cell.day;
                 const key = ds(d);
                 const rec = photoRecords[key];
                 const isSelected = selected.includes(key);
@@ -302,10 +313,10 @@ const s = StyleSheet.create({
   calCell:  { width:"14.2857%", height:48, borderRightWidth:1, borderBottomWidth:1,
                borderColor:C.border, alignItems:"center", justifyContent:"center",
                backgroundColor:C.bg },
-  calEmpty: { backgroundColor:C.surf1 },
   calHasPhoto:{ backgroundColor:C.surf1 },
   calSelected:{ backgroundColor:C.accentDim },
   calDay:   { fontSize:13, fontWeight:"600", color:C.t2 },
+  calDayDim:{ fontSize:13, fontWeight:"600", color:C.t3, opacity:0.35 },
   calDaySelected:{ color:C.accent },
   photoDot: { width:5, height:5, borderRadius:3, backgroundColor:C.accent,
                opacity:0.35, marginTop:3 },

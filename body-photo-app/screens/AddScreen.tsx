@@ -48,10 +48,16 @@ export function AddScreen({ onSave, records }: Props) {
 
   const calFirstDay = new Date(calYear, calMonth - 1, 1).getDay();
   const calDays = new Date(calYear, calMonth, 0).getDate();
-  const calCells: (number|null)[] = [
-    ...Array(calFirstDay).fill(null),
-    ...Array.from({length: calDays}, (_, i) => i + 1),
+  // 常に6行（42セル）。前月・翌月の日付は薄く表示する
+  type CalCell = { day: number; inMonth: boolean };
+  const calPrevDays = new Date(calYear, calMonth - 1, 0).getDate();
+  const calCells: CalCell[] = [
+    ...Array.from({length: calFirstDay}, (_, i) =>
+      ({ day: calPrevDays - calFirstDay + 1 + i, inMonth: false })),
+    ...Array.from({length: calDays}, (_, i) =>
+      ({ day: i + 1, inMonth: true })),
   ];
+  while (calCells.length < 42) calCells.push({ day: calCells.length - calFirstDay - calDays + 1, inMonth: false });
 
   const y = date.getFullYear();
   const m = String(date.getMonth()+1).padStart(2,"0");
@@ -107,7 +113,7 @@ export function AddScreen({ onSave, records }: Props) {
           </TouchableOpacity>
           <TouchableOpacity style={s.datePill} onPress={openCal} activeOpacity={0.75}>
             <Ionicons name="calendar-outline" size={14} color={C.t3} />
-            <Text style={s.datePillTxt}>{y} · {m} · {d} {dow}</Text>
+            <Text style={s.datePillTxt}>{y}.{m}.{d}（{dow}）</Text>
           </TouchableOpacity>
           <TouchableOpacity style={s.dateNavBtn} onPress={nextDay}>
             <Ionicons name="chevron-forward" size={18} color={C.t2} />
@@ -232,8 +238,13 @@ export function AddScreen({ onSave, records }: Props) {
             </View>
 
             <View style={s.calGrid}>
-              {calCells.map((day, i) => {
-                if (day === null) return <View key={`empty-${i}`} style={[s.calCell, s.calEmpty]} />;
+              {calCells.map((cell, i) => {
+                if (!cell.inMonth) return (
+                  <View key={`o${i}`} style={s.calCell}>
+                    <Text style={s.calDayDim}>{cell.day}</Text>
+                  </View>
+                );
+                const day = cell.day;
                 const isPicked =
                   calYear === date.getFullYear() &&
                   calMonth === date.getMonth() + 1 &&
@@ -329,8 +340,8 @@ const s = StyleSheet.create({
   calCell:  { width:"14.2857%", height:44, borderRightWidth:1, borderBottomWidth:1,
                borderColor:C.border, alignItems:"center", justifyContent:"center",
                backgroundColor:C.bg },
-  calEmpty: { backgroundColor:C.surf1 },
   calPicked:{ backgroundColor:C.accent },
   calDay:   { fontSize:13, fontWeight:"600", color:C.t2 },
+  calDayDim:{ fontSize:13, fontWeight:"600", color:C.t3, opacity:0.35 },
   calDayPicked:{ color:"#fff", fontWeight:"700" },
 });
