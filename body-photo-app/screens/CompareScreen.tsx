@@ -14,7 +14,7 @@ interface Props {
 
 export function CompareScreen({ records }: Props) {
   const [selected, setSelected] = useState<string[]>([]);
-  const [layout, setLayout] = useState<"v"|"h">("v");
+  const [layout, setLayout] = useState<"v"|"h"|"r">("v");
   const [sortMode, setSortMode] = useState<"date"|"weight">("date");
   const [pickerOpen, setPickerOpen] = useState(false);
   const now = new Date();
@@ -79,14 +79,14 @@ export function CompareScreen({ records }: Props) {
               </TouchableOpacity>
             ))}
             <View style={{flex:1}} />
-            {(["v","h"] as const).map(l => (
+            {(["v","h","r"] as const).map(l => (
               <TouchableOpacity
                 key={l}
                 style={[s.layoutBtn, layout===l && s.layoutBtnActive]}
                 onPress={() => setLayout(l)}
               >
                 <Ionicons
-                  name={l==="v" ? "reorder-four-outline" : "grid-outline"}
+                  name={l==="v" ? "reorder-four-outline" : l==="h" ? "grid-outline" : "phone-landscape-outline"}
                   size={14}
                   color={layout===l ? "#fff" : C.t3}
                 />
@@ -115,6 +115,28 @@ export function CompareScreen({ records }: Props) {
                     <View style={s.caption}>
                       <Text style={s.capWt}>{rec.weight}<Text style={s.capUnit}>kg</Text></Text>
                       <Text style={s.capDate}>{ds.replace(/-/g,".")}</Text>
+                    </View>
+                  </View>
+                </View>
+              );
+            })
+          ) : layout === "r" ? (
+            sorted.map(ds => {
+              const rec = photoRecords[ds];
+              return (
+                <View key={ds} style={s.itemV}>
+                  <View style={s.card}>
+                    {/* 写真+キャプションを90°回転。端末を横に持つと左右比較になる */}
+                    <View style={s.photoR}>
+                      <View style={s.photoRInner}>
+                        <View style={s.photoRPhoto}>
+                          <Image source={{ uri: rec.photoUri || "" }} style={s.photoImg} resizeMode="contain" />
+                        </View>
+                        <View style={s.caption}>
+                          <Text style={s.capWt}>{rec.weight}<Text style={s.capUnit}>kg</Text></Text>
+                          <Text style={s.capDate}>{ds.replace(/-/g,".")}</Text>
+                        </View>
+                      </View>
                     </View>
                   </View>
                 </View>
@@ -266,17 +288,23 @@ const s = StyleSheet.create({
   layoutBtnActive:{ backgroundColor:C.accent, borderColor:C.accent },
 
   result:   { marginHorizontal:8, marginTop:8, marginBottom:90 },
-  resultH:  { flexDirection:"row", flexWrap:"wrap", marginHorizontal:-4 },
+  resultH:  { flexDirection:"row", flexWrap:"wrap", marginHorizontal:-2 },
   empty:    { paddingVertical:48, paddingHorizontal:20, alignItems:"center",
                borderWidth:1, borderColor:C.border, borderRadius:16,
                backgroundColor:C.surf1 },
   emptyTxt: { fontSize:13, color:C.t3 },
   itemV:    { marginBottom:14 },
-  itemHWrap:{ width:"50%", paddingHorizontal:4, marginBottom:8 },
+  itemHWrap:{ width:"50%", paddingHorizontal:2, marginBottom:5 },
   card:     { borderWidth:1, borderColor:C.border, borderRadius:16,
                overflow:"hidden", backgroundColor:C.surf1 },
   photoV:   { width:"100%", aspectRatio:3/4, backgroundColor:C.bg },
   photoH:   { width:"100%", aspectRatio:3/4, backgroundColor:C.bg },
+  // 横向き比較: 4:3の枠の中に、縦向きカード（写真+キャプション）を90°回転して収める
+  photoR:   { width:"100%", aspectRatio:4/3, alignItems:"center", justifyContent:"center",
+               overflow:"hidden", backgroundColor:C.bg },
+  photoRInner:{ width:"75%", height:"133.33%", transform:[{rotate:"90deg"}],
+               backgroundColor:C.bg },
+  photoRPhoto:{ flex:1, backgroundColor:C.bg },
   photoImg: { width:"100%", height:"100%" },
   caption:  { flexDirection:"row", alignItems:"baseline", justifyContent:"center", gap:8,
                paddingVertical:7, backgroundColor:C.surf1,
