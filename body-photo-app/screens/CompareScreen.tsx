@@ -101,30 +101,33 @@ export function CompareScreen({ records }: Props) {
             sorted.map(ds => {
               const rec = photoRecords[ds];
               return (
-                <View key={ds} style={s.itemH}>
-                  <View style={s.photoH}>
-                    <Image source={{ uri: rec.photoUri || "" }} style={s.photoImg} resizeMode="contain" />
-                  </View>
-                  <View style={s.caption}>
-                    <Text style={s.capWt}>{rec.weight}<Text style={s.capUnit}>kg</Text></Text>
-                    <Text style={s.capDate}>{ds.replace(/-/g,".")}</Text>
+                <View key={ds} style={s.itemHWrap}>
+                  <View style={s.card}>
+                    <View style={s.photoH}>
+                      <Image source={{ uri: rec.photoUri || "" }} style={s.photoImg} resizeMode="contain" />
+                    </View>
+                    <View style={s.caption}>
+                      <Text style={s.capWt}>{rec.weight}<Text style={s.capUnit}>kg</Text></Text>
+                      <Text style={s.capDate}>{ds.replace(/-/g,".")}</Text>
+                    </View>
                   </View>
                 </View>
               );
             })
           ) : (
-            sorted.map((ds, i) => {
+            sorted.map(ds => {
               const rec = photoRecords[ds];
               return (
-                <View key={ds}>
-                  <View style={s.photoV}>
-                    <Image source={{ uri: rec.photoUri || "" }} style={s.photoImg} resizeMode="contain" />
+                <View key={ds} style={s.itemV}>
+                  <View style={s.card}>
+                    <View style={s.photoV}>
+                      <Image source={{ uri: rec.photoUri || "" }} style={s.photoImg} resizeMode="contain" />
+                    </View>
+                    <View style={s.caption}>
+                      <Text style={s.capWt}>{rec.weight}<Text style={s.capUnit}>kg</Text></Text>
+                      <Text style={s.capDate}>{ds.replace(/-/g,".")}</Text>
+                    </View>
                   </View>
-                  <View style={s.caption}>
-                    <Text style={s.capWt}>{rec.weight}<Text style={s.capUnit}>kg</Text></Text>
-                    <Text style={s.capDate}>{ds.replace(/-/g,".")}</Text>
-                  </View>
-                  {i < sorted.length-1 && <View style={s.divider} />}
                 </View>
               );
             })
@@ -251,19 +254,21 @@ const s = StyleSheet.create({
                borderWidth:1, borderColor:C.border, backgroundColor:C.surf2 },
   layoutBtnActive:{ backgroundColor:C.accent, borderColor:C.accent },
 
-  result:   { marginHorizontal:8, marginTop:8, marginBottom:90, borderWidth:1,
-               borderColor:C.border, borderRadius:16, overflow:"hidden",
+  result:   { marginHorizontal:8, marginTop:8, marginBottom:90 },
+  resultH:  { flexDirection:"row", flexWrap:"wrap", marginHorizontal:-4 },
+  empty:    { paddingVertical:48, paddingHorizontal:20, alignItems:"center",
+               borderWidth:1, borderColor:C.border, borderRadius:16,
                backgroundColor:C.surf1 },
-  resultH:  { flexDirection:"row", flexWrap:"wrap" },
-  empty:    { paddingVertical:48, paddingHorizontal:20, alignItems:"center" },
   emptyTxt: { fontSize:13, color:C.t3 },
+  itemV:    { marginBottom:14 },
+  itemHWrap:{ width:"50%", paddingHorizontal:4, marginBottom:8 },
+  card:     { borderWidth:1, borderColor:C.border, borderRadius:16,
+               overflow:"hidden", backgroundColor:C.surf1 },
   photoV:   { width:"100%", aspectRatio:3/4, backgroundColor:C.bg },
-  itemH:    { width:"50%" },
   photoH:   { width:"100%", aspectRatio:3/4, backgroundColor:C.bg },
   photoImg: { width:"100%", height:"100%" },
-  divider:  { height:1, backgroundColor:C.border },
   caption:  { flexDirection:"row", alignItems:"baseline", justifyContent:"center", gap:8,
-               paddingVertical:6, backgroundColor:C.surf1,
+               paddingVertical:7, backgroundColor:C.surf1,
                borderTopWidth:1, borderTopColor:C.border },
   capWt:    { fontFamily:F.condensedExtraBold, fontSize:18, color:C.t1, lineHeight:20 },
   capUnit:  { fontSize:11, color:C.t3 },
