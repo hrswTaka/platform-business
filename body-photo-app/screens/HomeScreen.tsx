@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { AppHeader } from "../components/AppHeader";
 import { C, F } from "../constants/theme";
 import type { BodyRecord } from "../App";
 
@@ -64,7 +63,6 @@ export function HomeScreen({ records, focusDate }: Props) {
 
   return (
     <View style={s.root}>
-      <AppHeader />
 
       {/* Month navigation */}
       <View style={s.monthNav}>

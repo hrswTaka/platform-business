@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import type { ComponentProps } from "react";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { AppHeader } from "../components/AppHeader";
 import { C, F } from "../constants/theme";
 
 type IoniconName = ComponentProps<typeof Ionicons>["name"];
@@ -31,6 +32,7 @@ function Row({ iconName, iconBg, title, sub, danger }: RowProps) {
 export function SettingsScreen() {
   return (
     <View style={s.root}>
+      <AppHeader />
       <ScrollView contentContainerStyle={s.content}>
 
         <Text style={s.sectionLbl}>データ管理</Text>
