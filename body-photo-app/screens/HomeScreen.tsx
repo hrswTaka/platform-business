@@ -113,9 +113,7 @@ export function HomeScreen({ records, focusDate }: Props) {
               onPress={() => record && setSelected(isSel ? null : key)}
               activeOpacity={record ? 0.7 : 1}
             >
-              {today_ ? (
-                <View style={s.todayCircle}><Text style={s.circleNum}>{d}</Text></View>
-              ) : isSel ? (
+              {isSel ? (
                 <View style={s.selCircle}><Text style={s.circleNum}>{d}</Text></View>
               ) : (
                 <Text style={[s.dayNum,
@@ -205,9 +203,7 @@ const s = StyleSheet.create({
 
   dayNum:     { fontSize:15, fontWeight:"600", color:C.t2, lineHeight:20 },
   dayNumDim:  { fontSize:15, fontWeight:"600", color:C.t3, opacity:0.35, lineHeight:20 },
-  todayCircle:{ width:27, height:27, borderRadius:14, backgroundColor:C.red,
-                 alignItems:"center", justifyContent:"center" },
-  selCircle:  { width:27, height:27, borderRadius:14, backgroundColor:C.accent,
+  selCircle:{ width:27, height:27, borderRadius:14, backgroundColor:C.accent,
                  alignItems:"center", justifyContent:"center" },
   circleNum:  { fontSize:15, fontWeight:"700", color:"#fff" },
   calWt:      { fontFamily:F.condensedExtraBold, fontSize:13, color:C.t1, marginTop:"auto" },
