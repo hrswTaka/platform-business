@@ -17,7 +17,8 @@ interface Props {
 export function HomeScreen({ records, focusDate }: Props) {
   const { width } = useWindowDimensions();
   const photoWidth = Math.min(220, Math.max(160, width * 0.48));
-  const TODAY = { y:2026, m:5, d:23 };
+  const now = new Date();
+  const TODAY = { y: now.getFullYear(), m: now.getMonth() + 1, d: now.getDate() };
   const [year, setYear] = useState(TODAY.y);
   const [month, setMonth] = useState(TODAY.m);
   const [selected, setSelected] = useState<string|null>(null);
@@ -192,9 +193,9 @@ const s = StyleSheet.create({
 
   grid:       { flexDirection:"row", flexWrap:"wrap",
                  borderLeftWidth:1, borderTopWidth:1, borderColor:CELL_BORDER },
-  cell:       { width:"14.2857%", height:56, borderRightWidth:1, borderBottomWidth:1,
+  cell:       { width:"14.2857%", height:46, borderRightWidth:1, borderBottomWidth:1,
                  borderColor:CELL_BORDER, alignItems:"center",
-                 paddingTop:4, paddingBottom:4, backgroundColor:C.bg },
+                 paddingTop:2, paddingBottom:2, backgroundColor:C.bg },
   cellEmpty:  { backgroundColor:C.surf1 },
   cellToday:  { backgroundColor:"rgba(229,57,53,0.05)" },
   cellSel:    { backgroundColor:C.accentDim },

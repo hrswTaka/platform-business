@@ -154,7 +154,7 @@ Record {
   - `react-native-view-shot`
   - `papaparse @types/papaparse`
   - `expo-router`
-- [ ] expo-sqlite DB初期化コード作成（`lib/db.ts`）
+- [x] expo-sqlite DB初期化コード作成（`lib/db.ts`）← ローカルのみ・クラウド不使用。写真は `lib/photos.ts` で端末内 Documents/photos/ に保存
 - [ ] RevenueCat 初期化（App Store Connect / Google Play Console 設定）
 - [ ] PostHog 初期化（プロジェクトキー設定）
 - [ ] EAS Build 設定（`eas.json`）

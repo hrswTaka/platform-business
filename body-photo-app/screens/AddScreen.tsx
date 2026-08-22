@@ -2,7 +2,6 @@ import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
 import { Image, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-import { AppHeader } from "../components/AppHeader";
 import { C, F } from "../constants/theme";
 import type { BodyRecord } from "../App";
 
@@ -11,7 +10,7 @@ const DOW_JP = ["日","月","火","水","木","金","土"];
 interface Props { onSave: (record: BodyRecord) => void; }
 
 export function AddScreen({ onSave }: Props) {
-  const today = new Date(2026,4,23);
+  const today = new Date();
   const [date, setDate] = useState(today);
   const [weight, setWeight] = useState("72.1");
   const [memo, setMemo] = useState("");
@@ -55,7 +54,6 @@ export function AddScreen({ onSave }: Props) {
 
   return (
     <View style={s.root}>
-      <AppHeader />
       <ScrollView keyboardShouldPersistTaps="handled">
 
         {/* Date navigator */}

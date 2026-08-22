@@ -1,28 +1,38 @@
 import { useFonts } from "expo-font";
 import { StatusBar } from "expo-status-bar";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ActivityIndicator, Platform, SafeAreaView, StyleSheet, View } from "react-native";
 import { BottomNav, TabId } from "./components/BottomNav";
+import { getAllRecords, upsertRecord, type BodyRecord, type RecordMap } from "./lib/db";
+import { deletePhoto, persistPhoto } from "./lib/photos";
 import { AddScreen } from "./screens/AddScreen";
 import { CompareScreen } from "./screens/CompareScreen";
 import { HomeScreen } from "./screens/HomeScreen";
 import { SettingsScreen } from "./screens/SettingsScreen";
 
-export type BodyRecord = {
-  date: string;
-  weight: number;
-  memo?: string;
-  photoUri?: string | null;
-};
+export type { BodyRecord };
 
 export default function App() {
   const [tab, setTab] = useState<TabId>("home");
-  const [records, setRecords] = useState<Record<string, BodyRecord>>({});
+  const [records, setRecords] = useState<RecordMap>({});
   const [latestSavedDate, setLatestSavedDate] = useState<string | null>(null);
 
+  useEffect(() => {
+    setRecords(getAllRecords());
+  }, []);
+
   function saveRecord(record: BodyRecord) {
-    setRecords(prev => ({ ...prev, [record.date]: record }));
-    setLatestSavedDate(record.date);
+    const prev = records[record.date];
+    let photoUri = record.photoUri ?? null;
+    // 新しい写真が選ばれたら恒久領域へコピーし、置き換えられた旧写真は消す
+    if (photoUri && photoUri !== prev?.photoUri) {
+      photoUri = persistPhoto(photoUri, record.date);
+      deletePhoto(prev?.photoUri);
+    }
+    const saved: BodyRecord = { ...record, photoUri };
+    upsertRecord(saved);
+    setRecords(prevMap => ({ ...prevMap, [saved.date]: saved }));
+    setLatestSavedDate(saved.date);
     setTab("home");
   }
 
@@ -48,10 +58,19 @@ export default function App() {
       <View style={s.shell}>
         <StatusBar style="dark" />
         <View style={s.screen}>
-          {tab === "home"     && <HomeScreen records={records} focusDate={latestSavedDate} />}
-          {tab === "compare"  && <CompareScreen records={records} />}
-          {tab === "add"      && <AddScreen onSave={saveRecord} />}
-          {tab === "settings" && <SettingsScreen />}
+          {/* タブを離れても各画面の状態（比較の選択など）を保持するため、全てマウントしたまま表示を切り替える */}
+          <View style={[s.tabPane, tab !== "home" && s.tabHidden]}>
+            <HomeScreen records={records} focusDate={latestSavedDate} />
+          </View>
+          <View style={[s.tabPane, tab !== "compare" && s.tabHidden]}>
+            <CompareScreen records={records} />
+          </View>
+          <View style={[s.tabPane, tab !== "add" && s.tabHidden]}>
+            <AddScreen onSave={saveRecord} />
+          </View>
+          <View style={[s.tabPane, tab !== "settings" && s.tabHidden]}>
+            <SettingsScreen />
+          </View>
         </View>
         <BottomNav activeTab={tab} onTabPress={setTab} />
       </View>
@@ -74,4 +93,6 @@ const s = StyleSheet.create({
     borderRadius: Platform.OS === "web" ? 28 : 0,
   },
   screen: { flex:1 },
+  tabPane:{ flex:1 },
+  tabHidden:{ display:"none" },
 });
