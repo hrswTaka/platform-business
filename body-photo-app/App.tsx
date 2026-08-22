@@ -18,7 +18,7 @@ export default function App() {
   const [latestSavedDate, setLatestSavedDate] = useState<string | null>(null);
 
   useEffect(() => {
-    setRecords(getAllRecords());
+    getAllRecords().then(setRecords).catch(console.error);
   }, []);
 
   function saveRecord(record: BodyRecord) {
@@ -30,7 +30,7 @@ export default function App() {
       deletePhoto(prev?.photoUri);
     }
     const saved: BodyRecord = { ...record, photoUri };
-    upsertRecord(saved);
+    upsertRecord(saved).catch(console.error);
     setRecords(prevMap => ({ ...prevMap, [saved.date]: saved }));
     setLatestSavedDate(saved.date);
     setTab("home");
