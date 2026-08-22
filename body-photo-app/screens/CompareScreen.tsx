@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { C, F } from "../constants/theme";
 import type { BodyRecord } from "../App";
@@ -7,6 +7,54 @@ import type { BodyRecord } from "../App";
 const DOW = ["日","月","火","水","木","金","土"];
 
 function pad(n: number) { return String(n).padStart(2,"0"); }
+
+// 写真の実際の縦横比（width/height）を取得する。取得完了までは3:4を仮置き
+function useImageRatio(uri: string | null | undefined) {
+  const [ratio, setRatio] = useState(3/4);
+  useEffect(() => {
+    if (!uri) return;
+    let live = true;
+    Image.getSize(uri, (w, h) => { if (live && w > 0 && h > 0) setRatio(w / h); }, () => {});
+    return () => { live = false; };
+  }, [uri]);
+  return ratio;
+}
+
+function PhotoCard({ rec, ds, rotated }: { rec: BodyRecord; ds: string; rotated?: boolean }) {
+  const ratio = useImageRatio(rec.photoUri);
+  const caption = (
+    <View style={s.caption}>
+      <Text style={s.capWt}>{rec.weight}<Text style={s.capUnit}>kg</Text></Text>
+      <Text style={s.capDate}>{ds.replace(/-/g,".")}</Text>
+    </View>
+  );
+  if (rotated) {
+    // 90°回転して収めるため、枠は縦横比を反転させる
+    return (
+      <View style={s.card}>
+        <View style={[s.photoR, { aspectRatio: 1/ratio }]}>
+          <View style={[
+            s.photoRInner,
+            { width: `${ratio*100}%` as `${number}%`, height: `${100/ratio}%` as `${number}%` },
+          ]}>
+            <View style={s.photoRPhoto}>
+              <Image source={{ uri: rec.photoUri || "" }} style={s.photoImg} resizeMode="contain" />
+            </View>
+            {caption}
+          </View>
+        </View>
+      </View>
+    );
+  }
+  return (
+    <View style={s.card}>
+      <View style={[s.photoV, { aspectRatio: ratio }]}>
+        <Image source={{ uri: rec.photoUri || "" }} style={s.photoImg} resizeMode="contain" />
+      </View>
+      {caption}
+    </View>
+  );
+}
 
 interface Props {
   records: Record<string, BodyRecord>;
@@ -108,57 +156,23 @@ export function CompareScreen({ records }: Props) {
               const rec = photoRecords[ds];
               return (
                 <View key={ds} style={s.itemHWrap}>
-                  <View style={s.card}>
-                    <View style={s.photoH}>
-                      <Image source={{ uri: rec.photoUri || "" }} style={s.photoImg} resizeMode="contain" />
-                    </View>
-                    <View style={s.caption}>
-                      <Text style={s.capWt}>{rec.weight}<Text style={s.capUnit}>kg</Text></Text>
-                      <Text style={s.capDate}>{ds.replace(/-/g,".")}</Text>
-                    </View>
-                  </View>
+                  <PhotoCard rec={rec} ds={ds} />
                 </View>
               );
             })
           ) : layout === "r" ? (
-            sorted.map(ds => {
-              const rec = photoRecords[ds];
-              return (
-                <View key={ds} style={s.itemV}>
-                  <View style={s.card}>
-                    {/* 写真+キャプションを90°回転。端末を横に持つと左右比較になる */}
-                    <View style={s.photoR}>
-                      <View style={s.photoRInner}>
-                        <View style={s.photoRPhoto}>
-                          <Image source={{ uri: rec.photoUri || "" }} style={s.photoImg} resizeMode="contain" />
-                        </View>
-                        <View style={s.caption}>
-                          <Text style={s.capWt}>{rec.weight}<Text style={s.capUnit}>kg</Text></Text>
-                          <Text style={s.capDate}>{ds.replace(/-/g,".")}</Text>
-                        </View>
-                      </View>
-                    </View>
-                  </View>
-                </View>
-              );
-            })
+            sorted.map(ds => (
+              <View key={ds} style={s.itemV}>
+                {/* 写真+キャプションを90°回転。端末を横に持つと左右比較になる */}
+                <PhotoCard rec={photoRecords[ds]} ds={ds} rotated />
+              </View>
+            ))
           ) : (
-            sorted.map(ds => {
-              const rec = photoRecords[ds];
-              return (
-                <View key={ds} style={s.itemV}>
-                  <View style={s.card}>
-                    <View style={s.photoV}>
-                      <Image source={{ uri: rec.photoUri || "" }} style={s.photoImg} resizeMode="contain" />
-                    </View>
-                    <View style={s.caption}>
-                      <Text style={s.capWt}>{rec.weight}<Text style={s.capUnit}>kg</Text></Text>
-                      <Text style={s.capDate}>{ds.replace(/-/g,".")}</Text>
-                    </View>
-                  </View>
-                </View>
-              );
-            })
+            sorted.map(ds => (
+              <View key={ds} style={s.itemV}>
+                <PhotoCard rec={photoRecords[ds]} ds={ds} />
+              </View>
+            ))
           )}
         </View>
       </ScrollView>
@@ -297,13 +311,11 @@ const s = StyleSheet.create({
   itemHWrap:{ width:"50%", paddingHorizontal:1, marginBottom:3 },
   card:     { borderWidth:1, borderColor:C.border, borderRadius:16,
                overflow:"hidden", backgroundColor:C.surf1 },
-  photoV:   { width:"100%", aspectRatio:3/4, backgroundColor:C.bg },
-  photoH:   { width:"100%", aspectRatio:3/4, backgroundColor:C.bg },
-  // 横向き比較: 4:3の枠の中に、縦向きカード（写真+キャプション）を90°回転して収める
-  photoR:   { width:"100%", aspectRatio:4/3, alignItems:"center", justifyContent:"center",
+  photoV:   { width:"100%", backgroundColor:C.bg },
+  // 横向き比較: 縦横比を反転した枠の中に、縦向きカード（写真+キャプション）を90°回転して収める
+  photoR:   { width:"100%", alignItems:"center", justifyContent:"center",
                overflow:"hidden", backgroundColor:C.bg },
-  photoRInner:{ width:"75%", height:"133.33%", transform:[{rotate:"90deg"}],
-               backgroundColor:C.bg },
+  photoRInner:{ transform:[{rotate:"90deg"}], backgroundColor:C.bg },
   photoRPhoto:{ flex:1, backgroundColor:C.bg },
   photoImg: { width:"100%", height:"100%" },
   caption:  { flexDirection:"row", alignItems:"baseline", justifyContent:"center", gap:8,
