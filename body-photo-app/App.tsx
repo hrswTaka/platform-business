@@ -66,7 +66,7 @@ export default function App() {
             <CompareScreen records={records} />
           </View>
           <View style={[s.tabPane, tab !== "add" && s.tabHidden]}>
-            <AddScreen onSave={saveRecord} />
+            <AddScreen onSave={saveRecord} records={records} />
           </View>
           <View style={[s.tabPane, tab !== "settings" && s.tabHidden]}>
             <SettingsScreen />

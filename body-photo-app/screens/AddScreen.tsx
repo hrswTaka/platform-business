@@ -1,18 +1,22 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Image, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { C, F } from "../constants/theme";
 import type { BodyRecord } from "../App";
+import type { RecordMap } from "../lib/db";
 
 const DOW_JP = ["日","月","火","水","木","金","土"];
 
-interface Props { onSave: (record: BodyRecord) => void; }
+interface Props {
+  onSave: (record: BodyRecord) => void;
+  records: RecordMap;
+}
 
-export function AddScreen({ onSave }: Props) {
+export function AddScreen({ onSave, records }: Props) {
   const today = new Date();
   const [date, setDate] = useState(today);
-  const [weight, setWeight] = useState("72.1");
+  const [weight, setWeight] = useState("");
   const [memo, setMemo] = useState("");
   const [photoUri, setPhotoUri] = useState<string | null>(null);
 
@@ -55,6 +59,16 @@ export function AddScreen({ onSave }: Props) {
   const dow = DOW_JP[date.getDay()];
   const dateKey = `${y}-${m}-${d}`;
   const canSave = Number.isFinite(parseFloat(weight));
+
+  // 選択日より前で直近の記録
+  const prevDates = Object.keys(records).filter(dk => dk < dateKey).sort();
+  const prevRecord = prevDates.length > 0 ? records[prevDates[prevDates.length - 1]] : null;
+
+  // DBロード後、未入力なら直近の体重を初期値にする
+  useEffect(() => {
+    if (weight === "" && prevRecord) setWeight(String(prevRecord.weight));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [records]);
 
   async function pickPhoto() {
     if (Platform.OS !== "web") {
@@ -100,9 +114,14 @@ export function AddScreen({ onSave }: Props) {
           </TouchableOpacity>
         </View>
 
-        <Text style={s.prevHint}>
-          前回は <Text style={s.prevHintBold}>71.7kg</Text> でした
-        </Text>
+        {prevRecord ? (
+          <Text style={s.prevHint}>
+            前回（{prevRecord.date.replace(/-/g,".")}）は{" "}
+            <Text style={s.prevHintBold}>{prevRecord.weight}kg</Text> でした
+          </Text>
+        ) : (
+          <View style={s.prevHintSpacer} />
+        )}
 
         {/* Form rows */}
         <View style={s.formRows}>
@@ -117,6 +136,8 @@ export function AddScreen({ onSave }: Props) {
                   value={weight}
                   onChangeText={setWeight}
                   keyboardType="decimal-pad"
+                  placeholder="0.0"
+                  placeholderTextColor={C.t3}
                   selectTextOnFocus
                 />
                 <Text style={s.wtUnit}>kg</Text>
@@ -251,6 +272,7 @@ const s = StyleSheet.create({
   prevHint:   { textAlign:"center", paddingVertical:9, paddingBottom:14,
                  fontSize:13, color:C.t3 },
   prevHintBold:{ fontFamily:F.condensedExtraBold, fontSize:18, color:C.t2 },
+  prevHintSpacer:{ height:14 },
 
   formRows:   { borderTopWidth:1, borderTopColor:C.border },
   row:        { flexDirection:"row", alignItems:"center",
