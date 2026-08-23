@@ -29,9 +29,6 @@
       "favicon": "./assets/favicon.png",
       "output": "single"
     },
-    "experiments": {
-      "baseUrl": "/platform-business"
-    },
     "plugins": [
       "expo-sqlite",
       "expo-font"

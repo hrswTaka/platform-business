@@ -56,6 +56,8 @@ GitHubにあるソースコードから、Apple Developer Program（¥14,900/年
 
 iPhoneアプリのビルドには本来Macが必要だが、GitHubの「Actions」機能がクラウド上のMacを無料で貸してくれる（公開リポジトリは無料枠）。リポジトリにはビルド用ワークフロー `.github/workflows/build-ios-ipa.yml` が用意済みなので、**ブラウザ操作だけでIPAが手に入る**。
 
+> このワークフローは動作確認済み（約9分で 13MB の `physique.ipa` が生成される）。
+
 ### 1-1. リポジトリを開く
 
 - リポジトリ所有者本人の場合: https://github.com/hrswTaka/platform-business をそのまま使う
