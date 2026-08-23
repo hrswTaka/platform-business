@@ -14,12 +14,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # React Native は Xcode 16.1 以上を要求する
-      - name: Select Xcode 16
+      # React Native は Xcode 16.1 以上を要求する（Xcode_16.app は 16.0 なので使えない）
+      - name: Select Xcode 16.4
         run: |
-          ls /Applications | grep -i xcode
-          sudo xcode-select -s /Applications/Xcode_16.app/Contents/Developer || \
-            sudo xcode-select -s "$(ls -d /Applications/Xcode_16*.app | sort -V | tail -1)/Contents/Developer"
+          sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer
           xcodebuild -version
 
       - uses: actions/setup-node@v4
